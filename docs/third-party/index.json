@@ -1,0 +1,279 @@
+{
+  "alembic": {
+    "version": "1.20.0",
+    "files": [
+      "packages/alembic-1.20.0/alembic-1.20.0.dist-info/licenses/LICENSE"
+    ]
+  },
+  "altgraph": {
+    "version": "0.17.5",
+    "files": [
+      "packages/altgraph-0.17.5/altgraph-0.17.5.dist-info/LICENSE"
+    ]
+  },
+  "annotated-doc": {
+    "version": "0.0.5",
+    "files": [
+      "packages/annotated-doc-0.0.5/annotated_doc-0.0.5.dist-info/licenses/LICENSE"
+    ]
+  },
+  "annotated-types": {
+    "version": "0.8.0",
+    "files": [
+      "packages/annotated-types-0.8.0/annotated_types-0.8.0.dist-info/licenses/LICENSE"
+    ]
+  },
+  "anyio": {
+    "version": "4.15.1",
+    "files": [
+      "packages/anyio-4.15.1/anyio-4.15.1.dist-info/licenses/LICENSE"
+    ]
+  },
+  "beautifulsoup4": {
+    "version": "4.15.0",
+    "files": [
+      "packages/beautifulsoup4-4.15.0/beautifulsoup4-4.15.0.dist-info/licenses/LICENSE"
+    ]
+  },
+  "certifi": {
+    "version": "2026.7.22",
+    "files": [
+      "packages/certifi-2026.7.22/certifi-2026.7.22.dist-info/licenses/LICENSE"
+    ]
+  },
+  "click": {
+    "version": "8.5.0",
+    "files": [
+      "packages/click-8.5.0/click-8.5.0.dist-info/licenses/LICENSE.txt"
+    ]
+  },
+  "colorama": {
+    "version": "0.4.6",
+    "files": [
+      "packages/colorama-0.4.6/colorama-0.4.6.dist-info/licenses/LICENSE.txt"
+    ]
+  },
+  "fastapi": {
+    "version": "0.142.2",
+    "files": [
+      "packages/fastapi-0.142.2/fastapi-0.142.2.dist-info/licenses/LICENSE"
+    ]
+  },
+  "greenlet": {
+    "version": "3.5.6",
+    "files": [
+      "packages/greenlet-3.5.6/greenlet-3.5.6.dist-info/licenses/LICENSE",
+      "packages/greenlet-3.5.6/greenlet-3.5.6.dist-info/licenses/LICENSE.PSF"
+    ]
+  },
+  "h11": {
+    "version": "0.16.0",
+    "files": [
+      "packages/h11-0.16.0/h11-0.16.0.dist-info/licenses/LICENSE.txt"
+    ]
+  },
+  "httpcore": {
+    "version": "1.0.9",
+    "files": [
+      "packages/httpcore-1.0.9/httpcore-1.0.9.dist-info/licenses/LICENSE.md"
+    ]
+  },
+  "httpx": {
+    "version": "0.28.1",
+    "files": [
+      "packages/httpx-0.28.1/httpx-0.28.1.dist-info/licenses/LICENSE.md"
+    ]
+  },
+  "idna": {
+    "version": "3.20",
+    "files": [
+      "packages/idna-3.20/idna-3.20.dist-info/licenses/LICENSE.md"
+    ]
+  },
+  "iniconfig": {
+    "version": "2.3.0",
+    "files": [
+      "packages/iniconfig-2.3.0/iniconfig-2.3.0.dist-info/licenses/LICENSE"
+    ]
+  },
+  "Mako": {
+    "version": "1.4.3",
+    "files": [
+      "packages/Mako-1.4.3/mako-1.4.3.dist-info/licenses/LICENSE"
+    ]
+  },
+  "MarkupSafe": {
+    "version": "3.0.3",
+    "files": [
+      "packages/MarkupSafe-3.0.3/markupsafe-3.0.3.dist-info/licenses/LICENSE.txt"
+    ]
+  },
+  "opentelemetry-api": {
+    "version": "1.45.0",
+    "files": [
+      "packages/opentelemetry-api-1.45.0/opentelemetry_api-1.45.0.dist-info/licenses/LICENSE"
+    ]
+  },
+  "packaging": {
+    "version": "26.3",
+    "files": [
+      "packages/packaging-26.3/packaging-26.3.dist-info/licenses/LICENSE",
+      "packages/packaging-26.3/packaging-26.3.dist-info/licenses/LICENSE.APACHE",
+      "packages/packaging-26.3/packaging-26.3.dist-info/licenses/LICENSE.BSD"
+    ]
+  },
+  "pefile": {
+    "version": "2024.8.26",
+    "files": [
+      "packages/pefile-2024.8.26/pefile-2024.8.26.dist-info/LICENSE"
+    ]
+  },
+  "pillow": {
+    "version": "12.3.0",
+    "files": [
+      "packages/pillow-12.3.0/pillow-12.3.0.dist-info/licenses/LICENSE"
+    ]
+  },
+  "pip": {
+    "version": "25.0.1",
+    "files": [
+      "packages/pip-25.0.1/pip-25.0.1.dist-info/LICENSE.txt"
+    ]
+  },
+  "pluggy": {
+    "version": "1.6.0",
+    "files": [
+      "packages/pluggy-1.6.0/pluggy-1.6.0.dist-info/licenses/LICENSE"
+    ]
+  },
+  "pydantic": {
+    "version": "2.13.5",
+    "files": [
+      "packages/pydantic-2.13.5/pydantic-2.13.5.dist-info/licenses/LICENSE"
+    ]
+  },
+  "pydantic_core": {
+    "version": "2.46.5",
+    "files": [
+      "packages/pydantic_core-2.46.5/pydantic_core-2.46.5.dist-info/licenses/LICENSE"
+    ]
+  },
+  "Pygments": {
+    "version": "2.21.0",
+    "files": [
+      "packages/Pygments-2.21.0/pygments-2.21.0.dist-info/licenses/LICENSE"
+    ]
+  },
+  "pyinstaller": {
+    "version": "6.22.3",
+    "files": [
+      "packages/pyinstaller-6.22.3/pyinstaller-6.22.3.dist-info/licenses/COPYING.txt"
+    ]
+  },
+  "pyinstaller-hooks-contrib": {
+    "version": "2026.8",
+    "files": [
+      "packages/pyinstaller-hooks-contrib-2026.8/pyinstaller_hooks_contrib-2026.8.dist-info/licenses/LICENSE"
+    ]
+  },
+  "PySide6": {
+    "version": "6.11.2",
+    "files": [
+      "packages/PySide6-6.11.2/pyside6-6.11.2.dist-info/licenses/LicenseRef-Qt-Commercial.txt"
+    ]
+  },
+  "PySide6_Addons": {
+    "version": "6.11.2",
+    "files": [
+      "packages/PySide6_Addons-6.11.2/pyside6_addons-6.11.2.dist-info/licenses/LicenseRef-Qt-Commercial.txt"
+    ]
+  },
+  "PySide6_Essentials": {
+    "version": "6.11.2",
+    "files": [
+      "packages/PySide6_Essentials-6.11.2/pyside6_essentials-6.11.2.dist-info/licenses/LicenseRef-Qt-Commercial.txt"
+    ]
+  },
+  "pytest": {
+    "version": "9.1.1",
+    "files": [
+      "packages/pytest-9.1.1/pytest-9.1.1.dist-info/licenses/LICENSE"
+    ]
+  },
+  "pywin32-ctypes": {
+    "version": "0.2.3",
+    "files": [
+      "packages/pywin32-ctypes-0.2.3/pywin32_ctypes-0.2.3.dist-info/LICENSE.txt"
+    ]
+  },
+  "ruff": {
+    "version": "0.16.10",
+    "files": [
+      "packages/ruff-0.16.10/ruff-0.16.10.dist-info/licenses/LICENSE"
+    ]
+  },
+  "setuptools": {
+    "version": "84.0.0",
+    "files": [
+      "packages/setuptools-84.0.0/setuptools-84.0.0.dist-info/licenses/LICENSE",
+      "packages/setuptools-84.0.0/setuptools/_vendor/autocommand-2.2.2.dist-info/LICENSE",
+      "packages/setuptools-84.0.0/setuptools/_vendor/backports.tarfile-1.2.0.dist-info/LICENSE",
+      "packages/setuptools-84.0.0/setuptools/_vendor/importlib_metadata-8.7.1.dist-info/licenses/LICENSE",
+      "packages/setuptools-84.0.0/setuptools/_vendor/jaraco.text-4.0.0.dist-info/LICENSE",
+      "packages/setuptools-84.0.0/setuptools/_vendor/jaraco_context-6.1.0.dist-info/licenses/LICENSE",
+      "packages/setuptools-84.0.0/setuptools/_vendor/jaraco_functools-4.4.0.dist-info/licenses/LICENSE",
+      "packages/setuptools-84.0.0/setuptools/_vendor/more_itertools-10.8.0.dist-info/licenses/LICENSE",
+      "packages/setuptools-84.0.0/setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE",
+      "packages/setuptools-84.0.0/setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.APACHE",
+      "packages/setuptools-84.0.0/setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.BSD",
+      "packages/setuptools-84.0.0/setuptools/_vendor/platformdirs-4.4.0.dist-info/licenses/LICENSE",
+      "packages/setuptools-84.0.0/setuptools/_vendor/tomli-2.4.0.dist-info/licenses/LICENSE",
+      "packages/setuptools-84.0.0/setuptools/_vendor/wheel-0.46.3.dist-info/licenses/LICENSE.txt",
+      "packages/setuptools-84.0.0/setuptools/_vendor/zipp-3.23.0.dist-info/licenses/LICENSE",
+      "packages/setuptools-84.0.0/setuptools/config/NOTICE",
+      "packages/setuptools-84.0.0/setuptools/config/_validate_pyproject/NOTICE"
+    ]
+  },
+  "shiboken6": {
+    "version": "6.11.2",
+    "files": [
+      "packages/shiboken6-6.11.2/shiboken6-6.11.2.dist-info/licenses/LicenseRef-Qt-Commercial.txt"
+    ]
+  },
+  "soupsieve": {
+    "version": "2.10",
+    "files": [
+      "packages/soupsieve-2.10/soupsieve-2.10.dist-info/licenses/LICENSE.md"
+    ]
+  },
+  "SQLAlchemy": {
+    "version": "2.1.1",
+    "files": [
+      "packages/SQLAlchemy-2.1.1/sqlalchemy-2.1.1.dist-info/licenses/LICENSE"
+    ]
+  },
+  "starlette": {
+    "version": "1.7.0",
+    "files": [
+      "packages/starlette-1.7.0/starlette-1.7.0.dist-info/licenses/LICENSE.md"
+    ]
+  },
+  "typing_extensions": {
+    "version": "4.16.0",
+    "files": [
+      "packages/typing_extensions-4.16.0/typing_extensions-4.16.0.dist-info/licenses/LICENSE"
+    ]
+  },
+  "typing-inspection": {
+    "version": "0.4.4",
+    "files": [
+      "packages/typing-inspection-0.4.4/typing_inspection-0.4.4.dist-info/licenses/LICENSE"
+    ]
+  },
+  "uvicorn": {
+    "version": "0.54.0",
+    "files": [
+      "packages/uvicorn-0.54.0/uvicorn-0.54.0.dist-info/licenses/LICENSE.md"
+    ]
+  }
+}

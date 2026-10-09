@@ -1,0 +1,4 @@
+# Portable paths resolve beside the executable (or source project).
+[storage]
+data_dir = "data"
+library_dir = "library"

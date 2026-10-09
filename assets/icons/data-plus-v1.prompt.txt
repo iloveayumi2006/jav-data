@@ -1,0 +1,5 @@
+Generated with the built-in image_gen tool.
+
+Use case: logo-brand. Asset type: Windows desktop application icon for jav-data. Create one polished square app icon based solely on the exact text "Data+". The text must be RED and the background WHITE. Large bold clean sans-serif typography, highly legible, centered composition, generous even padding, the plus sign clearly visible and directly after Data. A white rounded-square tile, subtle edge definition, restrained professional design. Flat crisp typography with no decorative symbols, no extra words or letters, no watermark, no mockup, no scene. Square front-facing icon fills the canvas.
+
+transparent_background: false

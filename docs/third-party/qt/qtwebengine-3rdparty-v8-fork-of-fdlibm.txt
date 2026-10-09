@@ -1,0 +1,9 @@
+Source: https://doc.qt.io/qt-6.11/qtwebengine-3rdparty-v8-fork-of-fdlibm.html
+
+Project Homepage
+Copyright (C) 1993-2004 by Sun Microsystems, Inc. All rights reserved.
+
+Developed at SunSoft, a Sun Microsystems, Inc. business.
+Permission to use, copy, modify, and distribute this
+software is freely granted, provided that this notice
+is preserved.

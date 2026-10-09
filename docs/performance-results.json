@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-05",
+  "workload": "Windows source runtime; snapshot of existing library; no DMM navigation; cold preview cache",
+  "before": {
+    "initial": {
+      "ready_seconds": 4.968,
+      "private_mb": 443.0,
+      "requests": 50,
+      "image_mb": 17.85,
+      "hidden_cards": 24,
+      "ui_max_gap_ms": 216.1
+    },
+    "cover_view_private_mb": 444.8,
+    "after_viewer_closes": {
+      "private_mb": 564.8,
+      "remaining_dialogs": 9
+    },
+    "page2_seconds": 3.014,
+    "return_page1_seconds": 2.159,
+    "final_private_mb": 568.9
+  },
+  "after": {
+    "initial": {
+      "ready_seconds": 3.67,
+      "private_mb": 201.4,
+      "requests": 26,
+      "image_mb": 2.81,
+      "hidden_cards": 0,
+      "ui_max_gap_ms": 276.6
+    },
+    "cover_view_private_mb": 205.2,
+    "after_viewer_closes": {
+      "private_mb": 228.2,
+      "remaining_dialogs": 1
+    },
+    "page2_seconds": 2.04,
+    "return_page1_seconds": 0.587,
+    "final_private_mb": 236.0
+  }
+}

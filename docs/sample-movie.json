@@ -1,0 +1,18 @@
+{
+  "distribution_product_id": "demo00001",
+  "manufacturer_product_id": "DEMO-001",
+  "title": "架空の作品タイトル",
+  "streaming_release_date": "2026年10月2日",
+  "product_release_date": "2026/10/01",
+  "runtime": "120分",
+  "actresses": ["架空の出演者一", "架空の出演者二"],
+  "directors": ["架空の監督"],
+  "series": "架空のシリーズ",
+  "maker": "架空のメーカー",
+  "label": "架空のレーベル",
+  "genres": ["サンプル"],
+  "related_tags": ["架空のタグ"],
+  "video_intro": "保存確認用の架空の紹介文です。",
+  "source_url": null,
+  "scraped_at": null
+}
