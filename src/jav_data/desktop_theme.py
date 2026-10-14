@@ -36,6 +36,7 @@ QGroupBox::title {subcontrol-origin: margin; left: 18px; padding: 0 6px;
 QPushButton {background: #f3f3f5; border: 1px solid transparent; border-radius: 9px;
     padding: 9px 12px; font-weight: 500;}
 QPushButton:hover {background: #eaeaec;}
+QPushButton#compactRetry {padding: 3px 8px; border-radius: 6px; font-size: 12px;}
 QPushButton:focus {border: 1px solid #d32342;}
 QPushButton:disabled {color: #b4b4bd; background: #f7f7f8;}
 QPushButton[primary="true"] {background: #d32342; color: white;}
@@ -58,6 +59,9 @@ QComboBox {background: #f7f7f9; border: 1px solid #e6e6ea; border-radius: 9px; p
 QComboBox::drop-down {border: none; width: 24px;}
 QComboBox QAbstractItemView {background: white; selection-background-color: #fdecef;
     selection-color: #202023; border: 1px solid #e6e6ea;}
+QListView {background: white; border: none; padding: 4px;}
+QListView::item {padding: 7px 10px;}
+QListView::item:selected {background: #fdecef; color: #bb1b36;}
 QScrollArea, QTableWidget {border: none; background: white;}
 QTableWidget {alternate-background-color: #fafafa; gridline-color: #eeeeF1;
     selection-background-color: #fdecef; selection-color: #202023;}

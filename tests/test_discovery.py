@@ -147,6 +147,9 @@ def test_api_validation_pagination_and_text_export(tmp_path, monkeypatch):
         assert response["pages"] == 3 and response["total"] == 205
         assert client.get("/api/product-searches/test?page=0").status_code == 422
         assert client.get("/api/product-searches/missing").status_code == 404
+        assert client.get("/api/product-searches/test?summary=true").json()["urls"] == []
+        all_urls = client.get("/api/product-searches/test?all_urls=true").json()["urls"]
+        assert len(all_urls) == 205 and all_urls == sorted(worker.jobs["test"]["urls"])
         downloaded = client.get("/api/product-searches/test/download")
         assert len(downloaded.text.splitlines()) == 205
         assert downloaded.text.splitlines() == sorted(worker.jobs["test"]["urls"])

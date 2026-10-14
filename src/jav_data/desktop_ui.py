@@ -9,7 +9,7 @@ from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from PySide6.QtCore import QEvent, QObject, QRectF, QSize, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QObject, QRectF, QSize, QStringListModel, Qt, QTimer, Signal
 from PySide6.QtGui import (
     QColor,
     QIntValidator,
@@ -23,6 +23,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QApplication,
     QButtonGroup,
     QComboBox,
@@ -37,6 +38,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLayout,
     QLineEdit,
+    QListView,
     QMainWindow,
     QPushButton,
     QScrollArea,
@@ -356,6 +358,28 @@ def button(label, callback, primary=False):
     return widget
 
 
+def retry_control(callback):
+    container = QWidget()
+    layout = QHBoxLayout(container)
+    layout.setContentsMargins(4, 0, 4, 0)
+    control = button("Retry", callback)
+    control.setObjectName("compactRetry")
+    control.setFixedSize(64, 28)
+    layout.addWidget(control)
+    layout.addStretch()
+    return container
+
+
+def configure_retry_column(widget, stretch_column):
+    header = widget.horizontalHeader()
+    header.setStretchLastSection(False)
+    header.setSectionResizeMode(stretch_column, QHeaderView.ResizeMode.Stretch)
+    last = widget.columnCount() - 1
+    header.setSectionResizeMode(last, QHeaderView.ResizeMode.Fixed)
+    widget.setColumnWidth(last, 88)
+    widget.verticalHeader().setDefaultSectionSize(36)
+
+
 def page(title):
     widget = QWidget()
     layout = QVBoxLayout(widget)
@@ -401,7 +425,7 @@ class DesktopWindow(QMainWindow):
         self.api = ApiClient(backend.base, self)
         self.api.error_handler = self.show_error
         self.closing = False
-        self.library_page = self.search_page = 1
+        self.library_page = 1
         self.library_pages = 1
         self.library_generation = 0
         self.library_sort_column = 4
@@ -1207,39 +1231,44 @@ class DesktopWindow(QMainWindow):
         self.search_results = QGroupBox("Product URLs")
         results_layout = QVBoxLayout(self.search_results)
         controls = QHBoxLayout()
-        controls.addWidget(
-            button(
-                "Copy this page",
-                lambda: QApplication.clipboard().setText(self.urls_result.toPlainText()),
-            )
-        )
-        controls.addWidget(button("Save all collected URLs…", self.save_search_urls))
+        self.copy_urls_button = button("Copy all URLs", self.copy_search_urls)
+        controls.addWidget(self.copy_urls_button)
+        self.delete_urls_button = button("Delete selected", self.delete_search_urls)
+        self.delete_urls_button.setEnabled(False)
+        controls.addWidget(self.delete_urls_button)
+        controls.addWidget(button("Save all URLs…", self.save_search_urls))
         controls.addStretch()
         results_layout.addLayout(controls)
-        self.urls_result = QTextEdit()
-        self.urls_result.setReadOnly(True)
+        self.urls_result = QListView()
+        self.urls_result.setUniformItemSizes(True)
+        self.urls_result.setWordWrap(False)
+        self.urls_result.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.urls_result.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.search_urls_model = QStringListModel(self.urls_result)
+        self.urls_result.setModel(self.search_urls_model)
+        self.urls_result.selectionModel().selectionChanged.connect(
+            lambda *_: self.delete_urls_button.setEnabled(
+                bool(self.urls_result.selectionModel().selectedRows())
+            )
+        )
+        self.delete_urls_shortcut = QShortcut(QKeySequence("Delete"), self.urls_result)
+        self.delete_urls_shortcut.setContext(Qt.ShortcutContext.WidgetShortcut)
+        self.delete_urls_shortcut.activated.connect(self.delete_search_urls)
         results_layout.addWidget(self.urls_result)
-        nav = QHBoxLayout()
-        self.search_previous = button("Previous", lambda: self.move_search(-1))
-        self.search_next = button("Next", lambda: self.move_search(1))
         self.search_label = QLabel()
-        nav.addWidget(self.search_previous)
-        nav.addWidget(self.search_label)
-        nav.addWidget(self.search_next)
-        nav.addStretch()
-        results_layout.addLayout(nav)
+        results_layout.addWidget(self.search_label)
         layout.addWidget(self.search_results, 1)
         self.search_results.hide()
-        layout.addStretch(0)
         self.stack.addWidget(widget)
 
     def start_search(self):
         term = self.product_query.text().strip()
         if not term or self.search_running:
             return
-        self.search_page = 1
+        self.search_timer.stop()
         self.search_button.setEnabled(False)
         self.search_results.hide()
+        self.search_urls_model.setStringList([])
         self.search_feedback.setText("Starting " + self.search_source.currentText() + " search…")
         self.search_running = True
 
@@ -1251,49 +1280,83 @@ class DesktopWindow(QMainWindow):
             "/api/product-searches",
             started,
             {"query": term, "source": self.search_source.currentText().lower()},
+            on_error=self.search_failed,
         )
+
+    def search_failed(self, error):
+        self.search_timer.stop()
+        self.search_running = False
+        self.search_button.setEnabled(True)
+        self.search_feedback.setText("Search failed · " + str(error))
 
     def load_search(self):
         if self.search_id and not self.closing:
             self.api.submit(
-                f"/api/product-searches/{self.search_id}?page={self.search_page}", self.show_search
+                f"/api/product-searches/{self.search_id}?summary=true",
+                self.show_search,
+                on_error=self.search_failed,
             )
 
     def show_search(self, result):
-        self.search_results.show()
-        self.urls_result.setPlainText("\n".join(result["urls"]))
-        self.search_label.setText(f"Page {result['page']} of {result['pages']}")
-        self.search_previous.setEnabled(result["page"] > 1)
-        self.search_next.setEnabled(result["page"] < result["pages"])
-        self.search_running = result["status"] == "running"
-        self.search_button.setEnabled(not self.search_running)
-        if self.search_running:
+        if result["status"] == "running":
             self.search_feedback.setText(
-                f"{result['total']} URLs collected · {result['source_pages']} source pages crawled"
+                f"Searching · {result['source_pages']} source pages crawled"
             )
             self.search_timer.start(1500)
         else:
-            self.search_feedback.setText(
-                f"Search {result['status']} · {result['total']} unique URLs · 100 per page"
-                + (" · " + result["error"] if result.get("error") else "")
+            self.search_timer.stop()
+            self.search_feedback.setText("Sorting search results…")
+            self.api.submit(
+                f"/api/product-searches/{self.search_id}?all_urls=true",
+                self.show_completed_search,
+                on_error=self.search_failed,
             )
 
-    def move_search(self, change):
-        self.search_timer.stop()
-        self.search_page += change
-        self.load_search()
+    def show_completed_search(self, result):
+        self.search_urls_model.setStringList(result["urls"])
+        self.search_results.show()
+        self.search_running = False
+        self.search_button.setEnabled(True)
+        self.search_feedback.setText(
+            f"Search {result['status']} · {result['total']} unique URLs"
+            + (" · " + result["error"] if result.get("error") else "")
+        )
+        self.update_search_count()
+
+    def update_search_count(self):
+        count = self.search_urls_model.rowCount()
+        self.search_label.setText(
+            f"{count} URLs remaining · Ctrl/Shift-click to select; Delete to remove"
+        )
+        self.copy_urls_button.setEnabled(count > 0)
+
+    def delete_search_urls(self):
+        if self.search_running:
+            return
+        selected = {index.row() for index in self.urls_result.selectionModel().selectedRows()}
+        if selected:
+            self.search_urls_model.setStringList(
+                [
+                    url
+                    for row, url in enumerate(self.search_urls_model.stringList())
+                    if row not in selected
+                ]
+            )
+            self.update_search_count()
+
+    def copy_search_urls(self):
+        QApplication.clipboard().setText("\n".join(self.search_urls_model.stringList()))
 
     def save_search_urls(self):
-        if self.search_id:
-            destination, _filter = QFileDialog.getSaveFileName(
-                self, "Save URLs", "product-urls.txt", "Text (*.txt)"
+        if self.search_running or not self.search_urls_model.rowCount():
+            return
+        destination, _filter = QFileDialog.getSaveFileName(
+            self, "Save URLs", "product-urls.txt", "Text (*.txt)"
+        )
+        if destination:
+            self.write_export(
+                destination, "\n".join(self.search_urls_model.stringList()).encode("utf-8")
             )
-            if destination:
-                self.api.submit(
-                    f"/api/product-searches/{self.search_id}/download",
-                    lambda data: self.write_export(destination, data),
-                    raw=True,
-                )
 
     def build_storage(self):
         widget, layout = page("Database & Library")
@@ -1341,7 +1404,7 @@ class DesktopWindow(QMainWindow):
         card = QGroupBox("Paste product URLs")
         card_layout = QVBoxLayout(card)
         self.pasted_urls = QTextEdit()
-        self.pasted_urls.setPlaceholderText("One DMM or MGS product URL per line (up to 100)")
+        self.pasted_urls.setPlaceholderText("One DMM or MGS product URL per line")
         self.pasted_urls.setMinimumHeight(135)
         self.pasted_urls.setMaximumHeight(160)
         card_layout.addWidget(self.pasted_urls)
@@ -1361,6 +1424,7 @@ class DesktopWindow(QMainWindow):
         controls.addStretch()
         card_layout.addLayout(controls)
         self.jobs_table = table(["ID", "Status", "Product URL", "Error", "Retry"])
+        configure_retry_column(self.jobs_table, 2)
         self.jobs_table.setMinimumHeight(230)
         card_layout.addWidget(self.jobs_table)
         layout.addWidget(card)
@@ -1386,6 +1450,7 @@ class DesktopWindow(QMainWindow):
         self.covers_table = table(
             ["ID", "Filename", "Status", "Progress", "Resolution", "Error", "Retry"]
         )
+        configure_retry_column(self.covers_table, 1)
         self.covers_table.setMinimumHeight(230)
         download_layout.addWidget(self.covers_table)
         layout.addWidget(downloads)
@@ -1495,12 +1560,27 @@ class DesktopWindow(QMainWindow):
 
     def enqueue_urls(self):
         urls = [url.strip() for url in self.pasted_urls.toPlainText().splitlines() if url.strip()]
-        if not urls:
+        if not urls or not self.enqueue_button.isEnabled():
             return
+        self.enqueue_button.setEnabled(False)
+        self.statusBar().showMessage(f"Adding {len(urls)} URLs to the queue…")
+
+        def added(result):
+            self.enqueue_button.setEnabled(True)
+            self.statusBar().showMessage(
+                f"Added {result['added']} URLs · {result['existing']} already queued", 15000
+            )
+            self.refresh_status()
+
+        def failed(error):
+            self.enqueue_button.setEnabled(True)
+            self.show_error(error)
+
         self.api.submit(
-            "/api/scrape-jobs",
-            lambda _result: self.refresh_status(),
+            "/api/scrape-jobs?summary=true",
+            added,
             {"urls": urls, "product_folder_id": self.target_folder.currentData()},
+            on_error=failed,
         )
 
     def refresh_status(self):
@@ -1531,8 +1611,7 @@ class DesktopWindow(QMainWindow):
                 self.jobs_table.setCellWidget(
                     row,
                     4,
-                    button(
-                        "Retry",
+                    retry_control(
                         lambda job_id=job["id"]: self.api.submit(
                             f"/api/scrape-jobs/{job_id}/retry", lambda _r: self.refresh_status(), {}
                         ),
@@ -1564,8 +1643,7 @@ class DesktopWindow(QMainWindow):
                 self.covers_table.setCellWidget(
                     row,
                     6,
-                    button(
-                        "Retry",
+                    retry_control(
                         lambda asset_id=asset["id"]: self.api.submit(
                             f"/api/media-assets/{asset_id}/retry",
                             lambda _r: self.refresh_status(),

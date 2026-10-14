@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
 import pytest
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QPushButton
 
 from jav_data.config import Settings
 from jav_data.desktop_ui import ApiClient, DesktopWindow
@@ -67,9 +67,14 @@ def test_cover_numbers_restart_after_clear_and_retry_uses_permanent_id(window, m
     calls = []
     monkeypatch.setattr(window.api, "submit", lambda path, *a, **kw: calls.append(path))
     asset = {
-        "id": 601, "filename": "demo-fanart.jpg", "status": "completed",
-        "total_bytes": 100, "downloaded_bytes": 100,
-        "width": 1000, "height": 700, "error": None,
+        "id": 601,
+        "filename": "demo-fanart.jpg",
+        "status": "completed",
+        "total_bytes": 100,
+        "downloaded_bytes": 100,
+        "width": 1000,
+        "height": 700,
+        "error": None,
     }
     window.show_covers([asset | {"id": 602}, asset])
     assert [window.covers_table.item(row, 0).text() for row in range(2)] == ["2", "1"]
@@ -77,5 +82,7 @@ def test_cover_numbers_restart_after_clear_and_retry_uses_permanent_id(window, m
     window.show_covers([asset | {"id": 903, "status": "failed"}])
     assert window.covers_table.horizontalHeaderItem(0).text() == "ID"
     assert window.covers_table.item(0, 0).text() == "1"
-    window.covers_table.cellWidget(0, 6).click()
+    retry = window.covers_table.cellWidget(0, 6).findChild(QPushButton)
+    assert retry.width() == 64 and retry.height() == 28
+    retry.click()
     assert calls[-1] == "/api/media-assets/903/retry"

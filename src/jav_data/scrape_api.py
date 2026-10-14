@@ -4,7 +4,7 @@ import asyncio
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import delete, select
+from sqlalchemy import delete, insert, select
 from sqlalchemy.orm import Session
 
 from jav_data.models import ProductFolder, ScrapeJob
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api", tags=["Scraping"])
 
 
 class URLBatch(BaseModel):
-    urls: list[str] = Field(min_length=1, max_length=100)
+    urls: list[str] = Field(min_length=1)
     product_folder_id: int | None = Field(default=None, ge=1)
 
     @field_validator("urls")
@@ -49,8 +49,11 @@ async def browser_action(action: str, request: Request):
 
 
 @router.post("/scrape-jobs", status_code=201)
-def enqueue(payload: URLBatch, request: Request):
-    with request.app.state.library_lock.work(), Session(request.app.state.engine) as session:
+def enqueue(payload: URLBatch, request: Request, summary: bool = False):
+    with (
+        request.app.state.library_lock.work(),
+        Session(request.app.state.engine, expire_on_commit=False) as session,
+    ):
         folder_id = payload.product_folder_id or session.scalar(
             select(ProductFolder.id).order_by(ProductFolder.id)
         )
@@ -58,19 +61,32 @@ def enqueue(payload: URLBatch, request: Request):
             raise HTTPException(400, "Add a library folder in Database & Library first")
         if session.get(ProductFolder, folder_id) is None:
             raise HTTPException(404, "Library not found")
-        jobs = []
-        for url in payload.urls:
-            job = session.scalar(
-                select(ScrapeJob).where(
-                    ScrapeJob.url == url,
-                    ScrapeJob.status.in_(["queued", "running", "awaiting_session"]),
+        jobs, created = [], 0
+        for offset in range(0, len(payload.urls), 500):
+            urls = payload.urls[offset : offset + 500]
+            existing = {
+                job.url: job
+                for job in session.scalars(
+                    select(ScrapeJob)
+                    .where(
+                        ScrapeJob.url.in_(urls),
+                        ScrapeJob.status.in_(["queued", "running", "awaiting_session"]),
+                    )
+                    .order_by(ScrapeJob.id)
                 )
-            )
-            if job is None:
-                job = ScrapeJob(url=url, product_folder_id=folder_id)
-                session.add(job)
-            jobs.append(job)
+            }
+            missing = [url for url in urls if url not in existing]
+            if missing:
+                added = session.scalars(
+                    insert(ScrapeJob).returning(ScrapeJob),
+                    [{"url": url, "product_folder_id": folder_id} for url in missing],
+                ).all()
+                existing.update((job.url, job) for job in added)
+                created += len(added)
+            jobs.extend(existing[url] for url in urls)
         session.commit()
+        if summary:
+            return {"added": created, "existing": len(jobs) - created, "total": len(jobs)}
         return [job_dict(job) for job in jobs]
 
 

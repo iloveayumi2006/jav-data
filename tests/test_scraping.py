@@ -133,3 +133,23 @@ def test_worker_saves_metadata_and_upserts(app):
     assert len(app.get("/api/movies").json()) == 1
     with Session(engine) as session:
         assert session.get(ScrapeJob, job_id).attempts == 2
+
+
+def test_large_queue_submission_summary_deduplication_and_validation(app):
+    urls = [f"https://video.dmm.co.jp/av/content/?id=demo{i:05d}" for i in range(1050)]
+    result = app.post("/api/scrape-jobs?summary=true", json={"urls": urls + [urls[0]]})
+    assert result.status_code == 201
+    assert result.json() == {"added": 1050, "existing": 0, "total": 1050}
+    assert app.post("/api/scrape-jobs?summary=true", json={"urls": urls}).json() == {
+        "added": 0,
+        "existing": 1050,
+        "total": 1050,
+    }
+    with Session(app.app.state.engine) as session:
+        assert len(session.query(ScrapeJob).all()) == 1050
+    assert (
+        app.post("/api/scrape-jobs", json={"urls": urls + ["https://example.com"]}).status_code
+        == 422
+    )
+    with Session(app.app.state.engine) as session:
+        assert len(session.query(ScrapeJob).all()) == 1050

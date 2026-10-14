@@ -64,3 +64,10 @@ New scraping jobs automatically export movie.nfo after metadata is saved and ref
 Movie detail covers occupy approximately 60% of the window height, centered and fitted without enlarging beyond the original resolution. Previous/Next buttons and Left/Right arrow keys follow the library search and sort order, including across result pages. Refresh metadata & cover queues the saved DMM or MGS product URL again; an unchanged completed cover is retained.
 
 Library browsing uses small cached previews; original cover files remain unchanged and are used in movie details and the full-cover viewer. The embedded browser initializes when first needed. The performance review is recorded in the source repository's docs folder.
+
+
+## Product URL lists
+
+Search shows progress while crawling, then displays all unique URLs sorted A–Z in one scrollable list. Ctrl/Shift-click and Delete selected (or the Delete key) removes unwanted entries. Copy all URLs and Save all URLs use the remaining list. Results are not repeatedly redrawn during crawling.
+
+Paste product URLs accepts lists beyond 100 entries. All URLs are validated before insertion; an invalid URL rejects the submission without partially queuing it. Duplicate active jobs are reused. Internal batches keep database insertion efficient, and a summary reports added and existing jobs. Scraping remains sequential. Retry controls in both queue tables use compact buttons.

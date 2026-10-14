@@ -102,14 +102,15 @@ class Discovery:
             self.thread.start()
             return identifier
 
-    def snapshot(self, identifier, page):
+    def snapshot(self, identifier, page, *, summary=False, all_urls=False):
         with self.lock:
             job = self.jobs.get(identifier)
             if job is None:
                 return None
+            urls = [] if summary else sorted(job["urls"])
             return {
                 **job,
-                "urls": sorted(job["urls"])[(page - 1) * 100 : page * 100],
+                "urls": urls if all_urls or summary else urls[(page - 1) * 100 : page * 100],
                 "total": len(job["urls"]),
                 "pages": max(1, (len(job["urls"]) + 99) // 100),
                 "page": page,
@@ -232,8 +233,14 @@ def start_search(payload: SearchInput, request: Request):
 
 
 @router.get("/api/product-searches/{identifier}")
-def results(identifier: str, request: Request, page: int = Query(1, ge=1)):
-    job = request.app.state.discovery.snapshot(identifier, page)
+def results(
+    identifier: str,
+    request: Request,
+    page: int = Query(1, ge=1),
+    summary: bool = False,
+    all_urls: bool = False,
+):
+    job = request.app.state.discovery.snapshot(identifier, page, summary=summary, all_urls=all_urls)
     if job is None:
         raise HTTPException(404, "Search expired or app restarted; run the search again")
     return job

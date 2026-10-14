@@ -85,3 +85,49 @@ def test_fixed_cover_cards_reflow_for_small_and_wide_windows_with_long_metadata(
     app.processEvents()
     assert window.card_grid.columns > columns
     assert len(window.library_cards) == 24
+
+
+def test_search_waits_for_completion_then_deletes_copies_and_saves(window, monkeypatch, tmp_path):
+    from PySide6.QtCore import QItemSelectionModel
+    from PySide6.QtWidgets import QFileDialog
+
+    requests = []
+    monkeypatch.setattr(window.api, "submit", lambda *a, **kw: requests.append((a, kw)))
+    window.search_id = "demo"
+    window.search_running = True
+    for _ in range(3):
+        window.show_search({"status": "running", "source_pages": 4})
+    assert window.search_results.isHidden()
+    assert window.search_urls_model.rowCount() == 0
+    window.search_timer.stop()
+    window.show_search({"status": "completed"})
+    assert requests[-1][0][0].endswith("?all_urls=true")
+    urls = [f"https://video.dmm.co.jp/av/content/?id=demo{i:05d}" for i in range(205)]
+    requests[-1][0][1]({"status": "completed", "urls": urls, "total": 205})
+    assert window.search_urls_model.stringList() == urls
+    selection = window.urls_result.selectionModel()
+    for row in (0, 5, 204):
+        selection.select(
+            window.search_urls_model.index(row), QItemSelectionModel.SelectionFlag.Select
+        )
+    window.delete_search_urls()
+    expected = [url for row, url in enumerate(urls) if row not in {0, 5, 204}]
+    window.copy_search_urls()
+    assert QApplication.clipboard().text().splitlines() == expected
+    output = tmp_path / "urls.txt"
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *a: (str(output), ""))
+    window.save_search_urls()
+    assert output.read_text(encoding="utf-8").splitlines() == expected
+    assert window.search_urls_model.rowCount() == 202
+
+
+def test_compact_scrape_retry_still_targets_original_job(window, monkeypatch):
+    from PySide6.QtWidgets import QPushButton
+
+    calls = []
+    monkeypatch.setattr(window.api, "submit", lambda path, *a, **kw: calls.append(path))
+    window.show_jobs([{"id": 507, "status": "failed", "url": "sample", "error": "failed"}])
+    retry = window.jobs_table.cellWidget(0, 4).findChild(QPushButton)
+    assert retry.width() == 64 and retry.height() == 28
+    retry.click()
+    assert calls[-1] == "/api/scrape-jobs/507/retry"

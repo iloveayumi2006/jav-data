@@ -36,21 +36,21 @@ Cookies are stored locally to reuse the session. If either website asks you to c
 1. Open **Search Product URLs**.
 2. Select **DMM** or **MGS**, then enter an actress name, distribution/product ID, maker, or another search keyword. Japanese names usually give the most direct matches.
 3. Click **Search** and wait for collection to finish.
-4. jav-data follows the selected website's result pages, removes duplicate product URLs, sorts them A–Z, and displays **100 URLs per page**.
-5. Use **Previous** and **Next** to browse the collected URLs.
-6. Click **Copy this page** to copy the current batch, or **Save all collected URLs…** to save the full list as a text file.
+4. jav-data follows all result pages and shows progress while crawling. Results appear once the search finishes, deduplicated and sorted A–Z in one scrollable list.
+5. Ctrl/Shift-click unwanted URLs and choose **Delete selected**, or press **Delete**.
+6. Click **Copy all URLs**, or **Save all URLs…**. Both include only the remaining URLs.
 
 This searches the selected website's keyword results. The **Library** search searches products already saved locally. URL search results last for the current app session; save the text list if you want to reuse it later.
 
 ## 3. Add URLs to scraping
 
 1. Open **Scraping & Downloads**.
-2. In **Paste product URLs**, paste one product URL per line. Each submission accepts up to **100 URLs**.
+2. In **Paste product URLs**, paste one product URL per line. There is no 100-URL submission limit; large lists are inserted in efficient internal batches.
 3. Choose the destination library folder from the dropdown.
 4. Click **Add to scrape queue**.
 5. Keep the website session ready. Metadata is collected first; cover downloads follow in the background.
 
-For more than 100 results, copy and submit each search-results page as a separate batch. You can also paste supported product URLs copied directly from DMM or MGS, such as:
+Copy the entire edited search list and paste it in one submission. You can also paste supported product URLs copied directly from DMM or MGS, such as:
 
 ```text
 https://video.dmm.co.jp/av/content/?id=PRODUCT_ID
