@@ -2,10 +2,20 @@
 
 from functools import lru_cache
 
-from PySide6.QtCore import QSize, Qt, Signal
-from PySide6.QtGui import QIcon, QPainter, QPixmap
+from PySide6.QtCore import QRectF, QSize, Qt, Signal
+from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 from PySide6.QtSvg import QSvgRenderer
-from PySide6.QtWidgets import QButtonGroup, QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import (
+    QButtonGroup,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QStyle,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
+    QVBoxLayout,
+)
 
 ACCENT = "#d32342"
 STYLE = """
@@ -147,7 +157,7 @@ class ViewSelector(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("segment")
-        self.index = 0
+        self.index = 1
         self.group = QButtonGroup(self)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(3, 3, 3, 3)
@@ -172,3 +182,37 @@ class ViewSelector(QFrame):
         self.index = index
         self.group.button(index).setChecked(True)
         self.currentIndexChanged.emit(index)
+
+
+class LibrarySelectionDelegate(QStyledItemDelegate):
+    """Paint one calm row highlight without native per-cell focus borders."""
+
+    def initStyleOption(self, option, index):
+        super().initStyleOption(option, index)
+        option.state &= ~QStyle.StateFlag.State_HasFocus
+
+    def paint(self, painter, option, index):
+        if not option.state & QStyle.StateFlag.State_Selected:
+            super().paint(painter, option, index)
+            return
+        styled = QStyleOptionViewItem(option)
+        self.initStyleOption(styled, index)
+        painter.save()
+        painter.setClipRect(option.rect)
+        painter.fillRect(option.rect, QColor("#fce9ed"))
+        painter.setFont(styled.font)
+        painter.setPen(QColor("#302329"))
+        text_rect = option.rect.adjusted(8, 0, -8, 0)
+        text = styled.fontMetrics.elidedText(
+            styled.text, styled.textElideMode, max(0, text_rect.width())
+        )
+        painter.drawText(text_rect, styled.displayAlignment, text)
+        if self.parent().horizontalHeader().visualIndex(index.column()) == 0:
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor(ACCENT))
+            painter.drawRoundedRect(
+                QRectF(option.rect.x() + 1, option.rect.y() + 16, 3, option.rect.height() - 32),
+                1.5,
+                1.5,
+            )
+        painter.restore()

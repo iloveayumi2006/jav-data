@@ -50,7 +50,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from jav_data.desktop_theme import ACCENT, STYLE, Navigation, ViewSelector, line_icon
+from jav_data.desktop_theme import (
+    ACCENT,
+    STYLE,
+    LibrarySelectionDelegate,
+    Navigation,
+    ViewSelector,
+    line_icon,
+)
 from jav_data.library import FIELD_LABELS, TAG_LABELS
 
 NAVIGATION = [
@@ -554,6 +561,7 @@ class DesktopWindow(QMainWindow):
         self.library_table = table(
             ["Cover", "Release date", "Product ID", "Actresses", "Title", "Maker"]
         )
+        self.library_table.setItemDelegate(LibrarySelectionDelegate(self.library_table))
         header = self.library_table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setStretchLastSection(False)
@@ -616,6 +624,7 @@ class DesktopWindow(QMainWindow):
         )
         selection.addWidget(self.open_selected_button)
         layout.addLayout(selection)
+        self.change_library_view(self.library_view.currentIndex())
         self.update_library_pagination(1, 1)
         self.stack.addWidget(widget)
 

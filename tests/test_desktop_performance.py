@@ -26,6 +26,7 @@ def test_hidden_cards_are_lazy_and_closed_cover_windows_are_destroyed(
     assert controller.profile is None
     window = DesktopWindow(SimpleNamespace(base="http://127.0.0.1:1"), controller, settings)
     assert window.browser_view is None
+    window.library_view.setCurrentIndex(0)
     movie = {
         "id": 1,
         "title": "Example",
