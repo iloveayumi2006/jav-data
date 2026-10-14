@@ -371,6 +371,7 @@ def retry_control(callback):
 
 
 def configure_retry_column(widget, stretch_column):
+    widget.setObjectName("queueTable")
     header = widget.horizontalHeader()
     header.setStretchLastSection(False)
     header.setSectionResizeMode(stretch_column, QHeaderView.ResizeMode.Stretch)

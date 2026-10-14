@@ -66,6 +66,7 @@ QScrollArea, QTableWidget {border: none; background: white;}
 QTableWidget {alternate-background-color: #fafafa; gridline-color: #eeeeF1;
     selection-background-color: #fdecef; selection-color: #202023;}
 QTableWidget::item {padding: 7px; border-bottom: 1px solid #eeeeF1;}
+QTableWidget#queueTable::item {padding: 3px 7px;}
 QHeaderView::section {background: white; color: #767680; font-size: 11px; font-weight: 600;
     padding: 11px 7px; border: none; border-bottom: 1px solid #e9e9ed;}
 QFrame#movieCard {background: white; border: none;}
