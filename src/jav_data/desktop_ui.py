@@ -1227,7 +1227,8 @@ class DesktopWindow(QMainWindow):
         row.insertWidget(0, self.search_source)
         self.product_query.setPlaceholderText("Actress name, product ID, maker or other keyword")
         layout.addLayout(row)
-        self.search_feedback = QLabel()
+        self.search_feedback = QLabel("Enter a keyword to search.")
+        self.search_feedback.setFixedHeight(28)
         layout.addWidget(self.search_feedback)
         self.search_results = QGroupBox("Product URLs")
         results_layout = QVBoxLayout(self.search_results)
@@ -1237,7 +1238,8 @@ class DesktopWindow(QMainWindow):
         self.delete_urls_button = button("Delete selected", self.delete_search_urls)
         self.delete_urls_button.setEnabled(False)
         controls.addWidget(self.delete_urls_button)
-        controls.addWidget(button("Save all URLs…", self.save_search_urls))
+        self.save_urls_button = button("Save all URLs…", self.save_search_urls)
+        controls.addWidget(self.save_urls_button)
         controls.addStretch()
         results_layout.addLayout(controls)
         self.urls_result = QListView()
@@ -1257,9 +1259,10 @@ class DesktopWindow(QMainWindow):
         self.delete_urls_shortcut.activated.connect(self.delete_search_urls)
         results_layout.addWidget(self.urls_result)
         self.search_label = QLabel()
+        self.search_label.setFixedHeight(24)
         results_layout.addWidget(self.search_label)
+        self.update_search_count()
         layout.addWidget(self.search_results, 1)
-        self.search_results.hide()
         self.stack.addWidget(widget)
 
     def start_search(self):
@@ -1268,8 +1271,8 @@ class DesktopWindow(QMainWindow):
             return
         self.search_timer.stop()
         self.search_button.setEnabled(False)
-        self.search_results.hide()
         self.search_urls_model.setStringList([])
+        self.update_search_count()
         self.search_feedback.setText("Starting " + self.search_source.currentText() + " search…")
         self.search_running = True
 
@@ -1315,7 +1318,6 @@ class DesktopWindow(QMainWindow):
 
     def show_completed_search(self, result):
         self.search_urls_model.setStringList(result["urls"])
-        self.search_results.show()
         self.search_running = False
         self.search_button.setEnabled(True)
         self.search_feedback.setText(
@@ -1330,6 +1332,7 @@ class DesktopWindow(QMainWindow):
             f"{count} URLs remaining · Ctrl/Shift-click to select; Delete to remove"
         )
         self.copy_urls_button.setEnabled(count > 0)
+        self.save_urls_button.setEnabled(count > 0)
 
     def delete_search_urls(self):
         if self.search_running:

@@ -89,22 +89,38 @@ def test_fixed_cover_cards_reflow_for_small_and_wide_windows_with_long_metadata(
 
 def test_search_waits_for_completion_then_deletes_copies_and_saves(window, monkeypatch, tmp_path):
     from PySide6.QtCore import QItemSelectionModel
+    from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QFileDialog
 
     requests = []
     monkeypatch.setattr(window.api, "submit", lambda *a, **kw: requests.append((a, kw)))
+    window.navigation.setCurrentRow(2)
+    window.resize(1440, 960)
+    window.show()
+    QTest.qWait(50)
+    QApplication.processEvents()
+    original_box = window.search_results.geometry()
+    assert not window.copy_urls_button.isEnabled()
+    assert not window.save_urls_button.isEnabled()
+    window.product_query.setText("demo")
+    window.start_search()
     window.search_id = "demo"
     window.search_running = True
     for _ in range(3):
         window.show_search({"status": "running", "source_pages": 4})
-    assert window.search_results.isHidden()
+    assert not window.search_results.isHidden()
     assert window.search_urls_model.rowCount() == 0
+    QApplication.processEvents()
+    assert window.search_results.geometry() == original_box
     window.search_timer.stop()
     window.show_search({"status": "completed"})
     assert requests[-1][0][0].endswith("?all_urls=true")
     urls = [f"https://video.dmm.co.jp/av/content/?id=demo{i:05d}" for i in range(205)]
     requests[-1][0][1]({"status": "completed", "urls": urls, "total": 205})
     assert window.search_urls_model.stringList() == urls
+    QApplication.processEvents()
+    assert window.search_results.geometry() == original_box
+    assert window.copy_urls_button.isEnabled() and window.save_urls_button.isEnabled()
     selection = window.urls_result.selectionModel()
     for row in (0, 5, 204):
         selection.select(

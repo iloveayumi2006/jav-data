@@ -68,6 +68,6 @@ Library browsing uses small cached previews; original cover files remain unchang
 
 ## Product URL lists
 
-Search shows progress while crawling, then displays all unique URLs sorted A–Z in one scrollable list. Ctrl/Shift-click and Delete selected (or the Delete key) removes unwanted entries. Copy all URLs and Save all URLs use the remaining list. Results are not repeatedly redrawn during crawling.
+The URL list and controls remain visible in the same layout before, during and after searching. The list stays empty and copy/save are disabled until results are available. Search shows progress while crawling, then displays all unique URLs sorted A–Z in one scrollable list. Ctrl/Shift-click and Delete selected (or the Delete key) removes unwanted entries. Copy all URLs and Save all URLs use the remaining list. Results are not repeatedly redrawn during crawling.
 
 Paste product URLs accepts lists beyond 100 entries. All URLs are validated before insertion; an invalid URL rejects the submission without partially queuing it. Duplicate active jobs are reused. Internal batches keep database insertion efficient, and a summary reports added and existing jobs. Scraping remains sequential. Retry controls in both queue tables use compact buttons.
