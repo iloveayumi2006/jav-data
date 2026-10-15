@@ -71,3 +71,8 @@ Library browsing uses small cached previews; original cover files remain unchang
 The URL list and controls remain visible in the same layout before, during and after searching. The list stays empty and copy/save are disabled until results are available. Search shows progress while crawling, then displays all unique URLs sorted A–Z in one scrollable list. Ctrl/Shift-click and Delete selected (or the Delete key) removes unwanted entries. Copy all URLs and Save all URLs use the remaining list. Results are not repeatedly redrawn during crawling.
 
 Paste product URLs accepts lists beyond 100 entries. All URLs are validated before insertion; an invalid URL rejects the submission without partially queuing it. Duplicate active jobs are reused. Internal batches keep database insertion efficient, and a summary reports added and existing jobs. Scraping remains sequential. Retry controls in both queue tables use compact buttons.
+
+
+## Export library metadata
+
+**Export metadata…** at the bottom of Library saves an Excel `.xlsx` workbook containing every movie matching the current displayed search/filter, across all pages, in the current sort order. With no search/filter it exports all movies. Both views support it. Columns: Streaming Release Date, Product Release Date, Actress, Distribution Product ID, Manufacturer Product ID, Title, Runtime, Series, Maker, Label, Source URL. Multiple actresses are joined in their original order with semicolons. Japanese metadata, date strings and leading zeros are preserved as text. Header filters and a frozen first row are included; covers are excluded. Export runs in the background and needs no extra installed software.

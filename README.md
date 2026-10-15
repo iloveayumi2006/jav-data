@@ -139,6 +139,12 @@ Available fields depend on the product page. The movie title and source URL are 
 - Click the detail cover to open the full-resolution viewer. Covers are centered, preserve their proportions, and do not enlarge beyond their original resolution.
 - **Refresh metadata & cover** queues the saved DMM or MGS product URL again. It updates metadata and checks whether the cover needs another download.
 
+## Export metadata to Excel
+
+In Library, click **Export metadata…** and choose where to save the `.xlsx` workbook. It exports all movies matching the displayed search and metadata filter, across all pages, in the displayed sort order. With no search or filter, it exports the whole library. This works in Cover view and Table view.
+
+Columns are Streaming Release Date, Product Release Date, Actress, Distribution Product ID, Manufacturer Product ID, Title, Runtime, Series, Maker, Label, and Source URL. Japanese values and original date strings are preserved. Multiple actresses share one cell in their original order, separated by semicolons. Product IDs are Excel text cells so leading zeros are preserved. The workbook has a frozen header and column filters; it does not include cover images.
+
 ## Storage, backups and updates
 
 Default settings in **config.toml**:

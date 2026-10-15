@@ -147,3 +147,34 @@ def test_compact_scrape_retry_still_targets_original_job(window, monkeypatch):
     assert retry.width() == 64 and retry.height() == 28
     retry.click()
     assert calls[-1] == "/api/scrape-jobs/507/retry"
+
+
+def test_metadata_export_uses_displayed_filter_sort_and_excludes_page(
+    window, monkeypatch, tmp_path
+):
+    from PySide6.QtWidgets import QFileDialog
+
+    requests = []
+    monkeypatch.setattr(window.api, "submit", lambda *a, **kw: requests.append((a, kw)))
+    output = tmp_path / "export.xlsx"
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *a: (str(output), ""))
+    window.library_context = {
+        "q": "検索",
+        "filter_field": "actresses",
+        "filter_value": "出演者",
+        "sort": "release_date_desc",
+        "page": 3,
+    }
+    window.export_metadata_button.click()
+    args, kwargs = requests[-1]
+    assert args[0].startswith("/api/library/export?") and kwargs["raw"]
+    assert parse_qs(urlsplit(args[0]).query) == {
+        "q": ["検索"],
+        "filter_field": ["actresses"],
+        "filter_value": ["出演者"],
+        "sort": ["release_date_desc"],
+    }
+    assert not window.export_metadata_button.isEnabled()
+    args[1](b"example workbook")
+    assert output.read_bytes() == b"example workbook"
+    assert window.export_metadata_button.isEnabled()

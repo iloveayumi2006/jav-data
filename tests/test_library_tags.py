@@ -93,3 +93,62 @@ def test_invalid_or_incomplete_tag_filters_are_rejected(client):
             ).status_code
             == 422
         )
+
+
+def test_excel_export_all_pages_order_filters_and_literal_japanese(client):
+    import io
+    from xml.etree import ElementTree as ET
+    from zipfile import ZipFile
+
+    from jav_data.metadata_export import COLUMNS, NS
+
+    for number in reversed(range(27)):
+        payload = {
+            "distribution_product_id": f"export{number:03d}",
+            "manufacturer_product_id": "000123",
+            "title": "=日本語 & <作品> " + f"{number:02d}",
+            "streaming_release_date": "2026/10/01",
+            "product_release_date": "2026年10月2日",
+            "actresses": ["二番目ではない", "出演者 <二>"],
+            "runtime": "120分",
+            "series": "シリーズ",
+            "maker": "メーカー",
+            "label": "レーベル",
+            "genres": ["共通" if number < 26 else "除外"],
+            "source_url": "https://video.dmm.co.jp/av/content/?id=export001",
+        }
+        assert client.post("/api/movies", json=payload).status_code == 201
+
+    def export(params):
+        response = client.get("/api/library/export", params=params)
+        assert response.status_code == 200
+        assert "spreadsheetml.sheet" in response.headers["content-type"]
+        with ZipFile(io.BytesIO(response.content)) as archive:
+            for name in archive.namelist():
+                ET.fromstring(archive.read(name))
+            root = ET.fromstring(archive.read("xl/worksheets/sheet1.xml"))
+        rows = root.findall(f"{{{NS}}}sheetData/{{{NS}}}row")
+        assert not root.findall(f".//{{{NS}}}f")
+        assert all(c.attrib["t"] == "inlineStr" for row in rows for c in row)
+        return [[c.find(f"{{{NS}}}is/{{{NS}}}t").text or "" for c in row] for row in rows]
+
+    all_rows = export({"sort": "product_id_desc"})
+    assert all_rows[0] == [label for label, _, _ in COLUMNS]
+    assert len(all_rows) == 28
+    assert all_rows[1][3] == "export026" and all_rows[-1][3] == "export000"
+    assert all_rows[1][:3] == ["2026/10/01", "2026年10月2日", "二番目ではない; 出演者 <二>"]
+    assert all_rows[1][4:7] == ["000123", "=日本語 & <作品> 26", "120分"]
+    params = {"filter_field": "genres", "filter_value": "共通", "sort": "title_asc"}
+    filtered = export(params)
+    assert len(filtered) == 27
+    expected = []
+    for page in (1, 2):
+        expected.extend(
+            m["distribution_product_id"]
+            for m in client.get("/api/library", params=params | {"page": page}).json()["items"]
+        )
+    assert [r[3] for r in filtered[1:]] == expected
+    assert len(export(params | {"q": "作品> 0"})) == 11
+    assert len(export({"q": "no matches"})) == 1
+    assert client.get("/api/library/export", params={"filter_field": "genres"}).status_code == 400
+    assert client.get("/api/library/export", params={"sort": "invalid"}).status_code == 422

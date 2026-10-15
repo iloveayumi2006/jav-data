@@ -1,14 +1,17 @@
 """Library browsing, download controls and safe local media delivery."""
 
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Literal, get_args
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from sqlalchemy import func, or_, select, update
 from sqlalchemy.orm import Session
+from starlette.background import BackgroundTask
 
 from jav_data.downloads import asset_path
+from jav_data.metadata_export import write_workbook
 from jav_data.models import Actress, MediaAsset, Movie, MovieActress, ProductFolder, ScrapeJob
 from jav_data.movies import serialize
 from jav_data.previews import cover_preview
@@ -68,6 +71,76 @@ def media_info(asset):
     }
 
 
+LibrarySort = Literal[
+    "newest",
+    "title_asc",
+    "title_desc",
+    "release_date_asc",
+    "release_date_desc",
+    "product_id_asc",
+    "product_id_desc",
+    "actresses_asc",
+    "actresses_desc",
+    "maker_asc",
+    "maker_desc",
+]
+
+
+def library_query(q="", filter_field=None, filter_value=None, sort="newest"):
+    if (filter_field is None) != (filter_value is None) or (
+        filter_value is not None and not filter_value.strip()
+    ):
+        raise HTTPException(400, "Choose a metadata field and a non-empty value together")
+    query = select(Movie)
+    if filter_field is not None:
+        query = query.where(tag_match(filter_field, filter_value))
+    if q.strip():
+        term = q.strip()
+        query = query.where(
+            or_(
+                Movie.title.contains(term, autoescape=True),
+                Movie.distribution_product_id.contains(term, autoescape=True),
+                Movie.manufacturer_product_id.contains(term, autoescape=True),
+                Movie.maker.contains(term, autoescape=True),
+                Movie.series.contains(term, autoescape=True),
+                Movie.id.in_(
+                    select(MovieActress.movie_id)
+                    .join(Actress)
+                    .where(Actress.name.contains(term, autoescape=True))
+                ),
+            )
+        )
+    if sort == "newest":
+        ordering = [Movie.id.desc()]
+    else:
+        field, direction = sort.rsplit("_", 1)
+        cast_names = (
+            select(Actress.name.label("name"))
+            .select_from(MovieActress)
+            .join(Actress)
+            .where(MovieActress.movie_id == Movie.id)
+            .order_by(MovieActress.position)
+            .correlate(Movie)
+            .subquery()
+        )
+        cast = select(func.group_concat(cast_names.c.name, " · ")).scalar_subquery()
+        release_date = func.date(func.replace(Movie.streaming_release_date, "/", "-"))
+        value = {
+            "title": Movie.title,
+            "release_date": release_date,
+            "product_id": Movie.distribution_product_id,
+            "actresses": cast,
+            "maker": Movie.maker,
+        }[field]
+        key = func.lower(func.coalesce(value, ""))
+        ordering = [
+            key == "",  # Missing values remain at the end in both directions.
+            key.asc() if direction == "asc" else key.desc(),
+            Movie.id.asc(),
+        ]
+    return query.order_by(*ordering)
+
+
 @router.get("/api/library")
 def browse(
     request: Request,
@@ -75,74 +148,12 @@ def browse(
     filter_field: TagField | None = None,
     filter_value: str | None = None,
     page: int = Query(1, ge=1),
-    sort: Literal[
-        "newest",
-        "title_asc",
-        "title_desc",
-        "release_date_asc",
-        "release_date_desc",
-        "product_id_asc",
-        "product_id_desc",
-        "actresses_asc",
-        "actresses_desc",
-        "maker_asc",
-        "maker_desc",
-    ] = "newest",
+    sort: LibrarySort = "newest",
 ):
-    if (filter_field is None) != (filter_value is None) or (
-        filter_value is not None and not filter_value.strip()
-    ):
-        raise HTTPException(400, "Choose a metadata field and a non-empty value together")
+    query = library_query(q, filter_field, filter_value, sort)
     with Session(request.app.state.engine) as session:
-        query = select(Movie)
-        if filter_field is not None:
-            query = query.where(tag_match(filter_field, filter_value))
-        if q.strip():
-            term = q.strip()
-            query = query.where(
-                or_(
-                    Movie.title.contains(term, autoescape=True),
-                    Movie.distribution_product_id.contains(term, autoescape=True),
-                    Movie.manufacturer_product_id.contains(term, autoescape=True),
-                    Movie.maker.contains(term, autoescape=True),
-                    Movie.series.contains(term, autoescape=True),
-                    Movie.id.in_(
-                        select(MovieActress.movie_id)
-                        .join(Actress)
-                        .where(Actress.name.contains(term, autoescape=True))
-                    ),
-                )
-            )
-        total = session.scalar(select(func.count()).select_from(query.subquery()))
-        if sort == "newest":
-            ordering = [Movie.id.desc()]
-        else:
-            field, direction = sort.rsplit("_", 1)
-            cast_names = (
-                select(Actress.name.label("name"))
-                .select_from(MovieActress)
-                .join(Actress)
-                .where(MovieActress.movie_id == Movie.id)
-                .order_by(MovieActress.position)
-                .correlate(Movie)
-                .subquery()
-            )
-            cast = select(func.group_concat(cast_names.c.name, " · ")).scalar_subquery()
-            release_date = func.date(func.replace(Movie.streaming_release_date, "/", "-"))
-            value = {
-                "title": Movie.title,
-                "release_date": release_date,
-                "product_id": Movie.distribution_product_id,
-                "actresses": cast,
-                "maker": Movie.maker,
-            }[field]
-            key = func.lower(func.coalesce(value, ""))
-            ordering = [
-                key == "",  # Missing values remain at the end in both directions.
-                key.asc() if direction == "asc" else key.desc(),
-                Movie.id.asc(),
-            ]
-        movies = session.scalars(query.order_by(*ordering).offset((page - 1) * 24).limit(24)).all()
+        total = session.scalar(select(func.count()).select_from(query.order_by(None).subquery()))
+        movies = session.scalars(query.offset((page - 1) * 24).limit(24)).all()
         covers = {}
         if movies:
             for asset in session.scalars(
@@ -170,6 +181,33 @@ def browse(
             "page": page,
             "pages": max(1, (total + 23) // 24),
         }
+
+
+@router.get("/api/library/export")
+def export_metadata(
+    request: Request,
+    q: str = "",
+    filter_field: TagField | None = None,
+    filter_value: str | None = None,
+    sort: LibrarySort = "newest",
+):
+    query = library_query(q, filter_field, filter_value, sort)
+    with NamedTemporaryFile(suffix=".xlsx", prefix="jav-data-export-", delete=False) as temporary:
+        path = Path(temporary.name)
+    try:
+        with Session(request.app.state.engine) as session:
+            write_workbook(path, session.scalars(query.execution_options(yield_per=500)))
+    except Exception as error:
+        path.unlink(missing_ok=True)
+        if isinstance(error, ValueError):
+            raise HTTPException(400, str(error)) from error
+        raise
+    return FileResponse(
+        path,
+        filename="jav-data-metadata.xlsx",
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        background=BackgroundTask(path.unlink, missing_ok=True),
+    )
 
 
 @router.get("/api/media-assets")

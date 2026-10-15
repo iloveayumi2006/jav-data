@@ -643,6 +643,11 @@ class DesktopWindow(QMainWindow):
         nav.addWidget(self.library_jump_button)
         layout.addLayout(nav)
         selection = QHBoxLayout()
+        self.export_metadata_button = button("Export metadata…", self.export_library_metadata)
+        self.export_metadata_button.setToolTip(
+            "Export all matching movies across every page, in the current sort order"
+        )
+        selection.addWidget(self.export_metadata_button)
         selection.addStretch()
         self.open_selected_button = button(
             "Open selected movie", lambda: self.open_movie(self.library_table.currentRow())
@@ -652,6 +657,34 @@ class DesktopWindow(QMainWindow):
         self.change_library_view(self.library_view.currentIndex())
         self.update_library_pagination(1, 1)
         self.stack.addWidget(widget)
+
+    def export_library_metadata(self):
+        destination, _filter = QFileDialog.getSaveFileName(
+            self, "Export movie metadata", "jav-data-metadata.xlsx", "Excel workbook (*.xlsx)"
+        )
+        if not destination:
+            return
+        if not destination.lower().endswith(".xlsx"):
+            destination += ".xlsx"
+        parameters = dict(getattr(self, "library_context", {}))
+        parameters.pop("page", None)
+        self.export_metadata_button.setEnabled(False)
+        self.statusBar().showMessage("Exporting movie metadata…")
+
+        def completed(data):
+            self.export_metadata_button.setEnabled(True)
+            self.write_export(destination, data)
+
+        def failed(error):
+            self.export_metadata_button.setEnabled(True)
+            self.show_error(error)
+
+        self.api.submit(
+            "/api/library/export?" + urlencode(parameters),
+            completed,
+            raw=True,
+            on_error=failed,
+        )
 
     def change_library_view(self, index):
         self.library_views.setCurrentIndex(index)
