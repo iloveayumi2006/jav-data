@@ -1,12 +1,21 @@
-# jav-data v1.0
+# jav-data v1.1
 
 A portable Windows desktop app for collecting DMM and MGS product metadata, original cover images, and Emby NFO files into a searchable local library. It uses a native interface and a built-in browser for website authentication, searching, and scraping.
 
 Japanese titles and metadata are preserved as supplied by the source website. The interface and metadata field labels are in English.
 
+## New in v1.1
+
+- Library opens in Cover view, with a softer Table selection style.
+- All product URL search results appear once crawling and sorting finish, in one scrollable list. Delete unwanted URLs before copying or saving. The page layout stays stable throughout searching.
+- Paste more than 100 product URLs in one submission. Grouped database operations make large queue submissions faster.
+- Compact Retry buttons in both scraping and cover-download tables.
+- Export all matching Library metadata to Excel in the current sort order, including results across all pages.
+- Centered Library pagination and an Export metadata button at the lower right on the same row. Double-click a movie to open its details.
+
 ## Download and requirements
 
-Download **jav-data-v1.0-windows-x64.zip** from [jav-data-v1.0](https://github.com/iloveayumi2006/jav-data/releases/tag/v1.0), extract the whole archive, and open **jav-data.exe**. Source code and release downloads are available on GitHub. The ZIP is the ready-to-run app; GitHub’s source-code archives are for development.
+Download **jav-data-v1.1-windows-x64.zip** from [jav-data-v1.1](https://github.com/iloveayumi2006/jav-data/releases/tag/v1.1), extract the whole archive, and open **jav-data.exe**. Source code and release downloads are available on GitHub. The ZIP is the ready-to-run app; GitHub’s source-code archives are for development.
 
 You need:
 
@@ -141,7 +150,7 @@ Available fields depend on the product page. The movie title and source URL are 
 
 ## Export metadata to Excel
 
-In Library, click **Export metadata…** and choose where to save the `.xlsx` workbook. It exports all movies matching the displayed search and metadata filter, across all pages, in the displayed sort order. With no search or filter, it exports the whole library. This works in Cover view and Table view.
+In Library, click **Export metadata…** at the lower right beside the centered pagination controls, and choose where to save the `.xlsx` workbook. It exports all movies matching the displayed search and metadata filter, across all pages, in the displayed sort order. With no search or filter, it exports the whole library. This works in Cover view and Table view.
 
 Columns are Streaming Release Date, Product Release Date, Actress, Distribution Product ID, Manufacturer Product ID, Title, Runtime, Series, Maker, Label, and Source URL. Japanese values and original date strings are preserved. Multiple actresses share one cell in their original order, separated by semicolons. Product IDs are Excel text cells so leading zeros are preserved. The workbook has a frozen header and column filters; it does not include cover images.
 
@@ -208,7 +217,7 @@ The source repository excludes databases, personal configuration, cookies, downl
 To archive a fresh release folder with documentation, dependency notices, a manifest, and a checksum:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts/package-release.py --folder "portable\release-clean\jav-data" --version 1.0
+.\.venv\Scripts\python.exe scripts/package-release.py --folder "portable\release-clean\jav-data" --version 1.1
 ```
 
 Third-party license notices are included in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and docs/third-party.

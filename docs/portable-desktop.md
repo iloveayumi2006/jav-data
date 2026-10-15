@@ -1,4 +1,4 @@
-# Portable jav-data v1.0
+# Portable jav-data v1.1
 
 Double-click `jav-data.exe`. Keep `_internal` beside it. Native Windows controls provide the UI; an embedded browser handles DMM and MGS. The internal API binds to loopback on an automatically selected port.
 
