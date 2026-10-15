@@ -612,9 +612,13 @@ class DesktopWindow(QMainWindow):
         self.preview_cache = OrderedDict()
         self.preview_cache_bytes = 0
         layout.addWidget(self.library_views, 1)
-        nav = QHBoxLayout()
+        self.library_pagination = QWidget()
+        self.library_pagination.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred
+        )
+        nav = QHBoxLayout(self.library_pagination)
+        nav.setContentsMargins(0, 0, 0, 0)
         nav.setSpacing(4)
-        nav.addStretch()
         self.library_previous = button("Previous", lambda: self.move_library(-1))
         self.library_next = button("Next", lambda: self.move_library(1))
         self.library_page_group = QButtonGroup(self)
@@ -641,19 +645,24 @@ class DesktopWindow(QMainWindow):
         nav.addWidget(self.library_jump)
         self.library_jump_button = button("Go", self.jump_library)
         nav.addWidget(self.library_jump_button)
-        layout.addLayout(nav)
-        selection = QHBoxLayout()
+        self.library_footer = QWidget()
+        footer = QGridLayout(self.library_footer)
+        footer.setContentsMargins(0, 0, 0, 0)
+        footer.setHorizontalSpacing(0)
+        footer.setColumnStretch(0, 1)
+        footer.setColumnStretch(2, 1)
+        footer.addWidget(self.library_pagination, 0, 1, Qt.AlignmentFlag.AlignCenter)
         self.export_metadata_button = button("Export metadata…", self.export_library_metadata)
         self.export_metadata_button.setToolTip(
             "Export all matching movies across every page, in the current sort order"
         )
-        selection.addWidget(self.export_metadata_button)
-        selection.addStretch()
-        self.open_selected_button = button(
-            "Open selected movie", lambda: self.open_movie(self.library_table.currentRow())
+        footer.addWidget(
+            self.export_metadata_button,
+            0,
+            2,
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
         )
-        selection.addWidget(self.open_selected_button)
-        layout.addLayout(selection)
+        layout.addWidget(self.library_footer)
         self.change_library_view(self.library_view.currentIndex())
         self.update_library_pagination(1, 1)
         self.stack.addWidget(widget)
@@ -688,7 +697,6 @@ class DesktopWindow(QMainWindow):
 
     def change_library_view(self, index):
         self.library_views.setCurrentIndex(index)
-        self.open_selected_button.setVisible(index == 0)
         if index and not self.library_cards and hasattr(self, "library_movies"):
             self.render_library_cards()
         self.update_library_hint()

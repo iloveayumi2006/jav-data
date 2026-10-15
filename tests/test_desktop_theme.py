@@ -27,17 +27,15 @@ def window(tmp_path, monkeypatch):
 def test_sidebar_view_buttons_and_sort_controls_keep_existing_query_context(window, monkeypatch):
     assert window.library_view.currentIndex() == window.library_views.currentIndex() == 1
     assert window.library_view.group.button(1).isChecked()
-    assert window.open_selected_button.isHidden()
+    assert not hasattr(window, "open_selected_button")
     for index, control in enumerate(window.navigation.buttons):
         control.click()
         assert window.navigation.currentRow() == window.stack.currentIndex() == index
     window.navigation.buttons[0].click()
     window.library_view.group.button(1).click()
     assert window.library_view.currentIndex() == window.library_views.currentIndex() == 1
-    assert window.open_selected_button.isHidden()
     window.library_view.group.button(0).click()
     assert window.library_view.currentIndex() == window.library_views.currentIndex() == 0
-    assert not window.open_selected_button.isHidden()
     calls = []
     monkeypatch.setattr(window.api, "submit", lambda path, *a, **kw: calls.append(path))
     window.library_query.setText("検索")

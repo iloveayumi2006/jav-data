@@ -97,3 +97,24 @@ def test_single_page_and_result_count_reduction(window, monkeypatch):
     monkeypatch.setattr(window, "load_library", lambda: loaded.append(window.library_page))
     window.show_library({"page": 21, "pages": 2}, window.library_generation)
     assert loaded == [2]
+
+
+@pytest.mark.parametrize("view", [0, 1])
+def test_footer_centers_pagination_and_right_aligns_export_on_same_row(window, view):
+    from PySide6.QtCore import QPoint
+    from PySide6.QtTest import QTest
+
+    window.library_view.setCurrentIndex(view)
+    window.update_library_pagination(1, 40)
+    window.resize(1440, 960)
+    window.show()
+    QTest.qWait(50)
+    QApplication.processEvents()
+    footer = window.library_footer
+    pager = window.library_pagination
+    export = window.export_metadata_button
+    assert abs(pager.geometry().center().x() - footer.rect().center().x()) <= 1
+    export_center = export.mapTo(footer, export.rect().center())
+    assert abs(export_center.y() - pager.geometry().center().y()) <= 1
+    assert abs(export.geometry().right() - footer.rect().right()) <= 1
+    assert pager.mapTo(footer, QPoint(pager.width(), 0)).x() < export.geometry().left()
