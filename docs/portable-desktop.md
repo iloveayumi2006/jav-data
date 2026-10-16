@@ -51,7 +51,7 @@ Click an actress, director, series, maker, label, genre or related tag in movie 
 
 Covers fit the available space in both movie details and the full-cover window, preserving aspect ratio and never exceeding the original image's physical pixel resolution. The full-cover window also supports minimize, maximize and close. Resizing either window automatically refits the cover.
 
-History clearing hides finished jobs while preserving movie records and files. Cover downloads show list numbers in the ID column, rather than permanent database IDs. When the list is cleared, the next download starts at 1; active downloads remain listed. Active jobs remain visible. Cover downloads support pause, resume and retry; interrupted file transfers restart safely.
+History clearing hides finished jobs while preserving movie records and files. Cover downloads show list numbers in the ID column, rather than permanent database IDs. When the list is cleared, the next download starts at 1; active downloads remain listed. Active jobs remain visible. The cover-download table shows the full visible history without a 200-entry cap. Progress updates reuse existing rows, and new downloads are inserted at the top. Cover downloads support pause, resume and retry; interrupted file transfers restart safely.
 
 ## Development and rebuilding
 

@@ -86,3 +86,34 @@ def test_cover_numbers_restart_after_clear_and_retry_uses_permanent_id(window, m
     assert retry.width() == 64 and retry.height() == 28
     retry.click()
     assert calls[-1] == "/api/media-assets/903/retry"
+
+
+def test_large_cover_list_reuses_rows_for_progress_and_new_downloads(window):
+    def asset(i):
+        return {
+            "id": i,
+            "filename": f"cover{i}.jpg",
+            "status": "downloading",
+            "total_bytes": 100000,
+            "downloaded_bytes": 0,
+            "width": None,
+            "height": None,
+            "error": None,
+        }
+
+    rows = [asset(i) for i in reversed(range(1, 1106))]
+    window.show_covers(rows)
+    assert window.covers_table.rowCount() == 1105
+    preserved = window.covers_table.item(0, 1)
+    progress = rows[0] | {"downloaded_bytes": 50000}
+    window.show_covers([progress] + rows[1:])
+    assert window.covers_table.item(0, 1) is preserved
+    assert "49 KB" in window.covers_table.item(0, 3).text()
+    window.show_covers([asset(1106), progress] + rows[1:])
+    assert window.covers_table.rowCount() == 1106
+    assert window.covers_table.item(1, 1) is preserved
+    assert window.covers_table.item(0, 0).text() == "1106"
+    assert window.covers_table.item(1105, 0).text() == "1"
+    window.show_covers([asset(1106)])
+    assert window.covers_table.rowCount() == 1
+    assert window.covers_table.item(0, 0).text() == "1"

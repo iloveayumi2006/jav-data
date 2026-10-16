@@ -67,7 +67,7 @@ https://video.dmm.co.jp/av/content/?id=PRODUCT_ID
 
 Successful jobs create or update the movie in the library. Adding an existing Product ID updates that record instead of creating a second movie, while keeping its existing product-folder location. An unchanged completed cover is reused.
 
-Use **Retry** for failed jobs after fixing the connection or session. Cover downloads have separate **Pause**, **Resume**, and **Retry** controls. Clearing finished queue/download history preserves the movies and their files. The cover-download ID column shows list numbers; after the list is cleared, the next download starts at 1. Active downloads remain listed.
+Use **Retry** for failed jobs after fixing the connection or session. Cover downloads have separate **Pause**, **Resume**, and **Retry** controls. The card lists all uncleared download entries without a 200-row cap. Clearing finished queue/download history preserves the movies and their files. The cover-download ID column shows list numbers; after the list is cleared, the next download starts at 1. Active downloads remain listed.
 
 ## MGS identifiers and covers
 

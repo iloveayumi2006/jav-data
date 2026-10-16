@@ -1641,7 +1641,9 @@ class DesktopWindow(QMainWindow):
             )
         if self.stack.currentIndex() == 3:
             self.api.submit("/api/scrape-jobs", self.show_jobs, once=True)
-            self.api.submit("/api/media-assets?history=true", self.show_covers, once=True)
+            self.api.submit(
+                "/api/media-assets?history=true&all_results=true", self.show_covers, once=True
+            )
 
     def show_jobs(self, jobs):
         if jobs == getattr(self, "last_jobs", None):
@@ -1666,36 +1668,57 @@ class DesktopWindow(QMainWindow):
     def show_covers(self, assets):
         if assets == getattr(self, "last_covers", None):
             return
-        self.last_covers = assets
-        self.covers_table.clearContents()
-        self.covers_table.setRowCount(len(assets))
-        for row, asset in enumerate(assets):
-            total = asset["total_bytes"]
-            progress = f"{asset['downloaded_bytes'] / 1024:.0f} KB" + (
-                f" / {total / 1024:.0f} KB" if total else ""
-            )
-            values = [
-                len(assets) - row,
-                asset["filename"],
-                asset["status"],
-                progress,
-                f"{asset['width']} × {asset['height']}" if asset["width"] else "—",
-                asset["error"] or "",
-            ]
-            for col, value in enumerate(values):
-                self.covers_table.setItem(row, col, QTableWidgetItem(str(value)))
-            if asset["status"] == "failed":
-                self.covers_table.setCellWidget(
-                    row,
-                    6,
-                    retry_control(
-                        lambda asset_id=asset["id"]: self.api.submit(
-                            f"/api/media-assets/{asset_id}/retry",
-                            lambda _r: self.refresh_status(),
-                            {},
-                        ),
-                    ),
+        previous_ids = [asset["id"] for asset in getattr(self, "last_covers", [])]
+        identifiers = [asset["id"] for asset in assets]
+        added = len(identifiers) - len(previous_ids)
+        table = self.covers_table
+        table.setUpdatesEnabled(False)
+        try:
+            if previous_ids != identifiers:
+                if previous_ids and added > 0 and identifiers[added:] == previous_ids:
+                    for row in range(added):
+                        table.insertRow(row)
+                else:
+                    table.clearContents()
+                    table.setRowCount(len(assets))
+            for row, asset in enumerate(assets):
+                total = asset["total_bytes"]
+                progress = f"{asset['downloaded_bytes'] / 1024:.0f} KB" + (
+                    f" / {total / 1024:.0f} KB" if total else ""
                 )
+                values = [
+                    len(assets) - row,
+                    asset["filename"],
+                    asset["status"],
+                    progress,
+                    f"{asset['width']} × {asset['height']}" if asset["width"] else "—",
+                    asset["error"] or "",
+                ]
+                for col, value in enumerate(values):
+                    text = str(value)
+                    item = table.item(row, col)
+                    if item is None:
+                        table.setItem(row, col, QTableWidgetItem(text))
+                    elif item.text() != text:
+                        item.setText(text)
+                retry = table.cellWidget(row, 6)
+                if asset["status"] == "failed" and retry is None:
+                    table.setCellWidget(
+                        row,
+                        6,
+                        retry_control(
+                            lambda asset_id=asset["id"]: self.api.submit(
+                                f"/api/media-assets/{asset_id}/retry",
+                                lambda _r: self.refresh_status(),
+                                {},
+                            )
+                        ),
+                    )
+                elif asset["status"] != "failed" and retry is not None:
+                    table.removeCellWidget(row, 6)
+            self.last_covers = assets
+        finally:
+            table.setUpdatesEnabled(True)
 
     def closeEvent(self, event):
         event.ignore()

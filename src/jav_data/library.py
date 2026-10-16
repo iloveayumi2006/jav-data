@@ -216,6 +216,7 @@ def assets(
     movie_id: int | None = None,
     limit: int = Query(200, ge=1, le=1000),
     history: bool = False,
+    all_results: bool = False,
 ):
     with Session(request.app.state.engine) as session:
         query = select(MediaAsset)
@@ -223,10 +224,10 @@ def assets(
             query = query.where(MediaAsset.movie_id == movie_id)
         if history:
             query = query.where(MediaAsset.history_hidden.is_(False))
-        return [
-            media_info(a)
-            for a in session.scalars(query.order_by(MediaAsset.id.desc()).limit(limit))
-        ]
+        query = query.order_by(MediaAsset.id.desc())
+        if not all_results:
+            query = query.limit(limit)
+        return [media_info(a) for a in session.scalars(query)]
 
 
 @router.post("/api/download-history/clear")

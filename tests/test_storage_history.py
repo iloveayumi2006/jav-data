@@ -422,3 +422,36 @@ def test_remove_default_and_last_library_persists_across_restart(tmp_path, monke
         assert restored.status_code == 201
         assert restored.json()[0]["label"] == "library"
         assert client.post("/api/scrape-jobs", json={"urls": [url]}).status_code == 201
+
+
+def test_complete_cover_history_exceeds_200_and_1000_without_changing_default_limit(client):
+    movie = client.post(
+        "/api/movies", json={"distribution_product_id": "history001", "title": "History"}
+    ).json()
+    with Session(client.app.state.engine) as session:
+        session.add_all(
+            [
+                MediaAsset(
+                    movie_id=movie["id"],
+                    kind="cover",
+                    filename=f"cover{i:04d}.jpg",
+                    status="completed",
+                )
+                for i in range(1105)
+            ]
+        )
+        session.commit()
+    assert len(client.get("/api/media-assets", params={"history": True}).json()) == 200
+    all_rows = client.get("/api/media-assets", params={"history": True, "all_results": True}).json()
+    assert len(all_rows) == 1105
+    assert [a["id"] for a in all_rows] == sorted((a["id"] for a in all_rows), reverse=True)
+    assert client.post("/api/download-history/clear").json()["cleared"] == 1105
+    assert client.get("/api/media-assets?history=true&all_results=true").json() == []
+    assert (
+        len(
+            client.get(
+                "/api/media-assets", params={"movie_id": movie["id"], "all_results": True}
+            ).json()
+        )
+        == 1105
+    )
