@@ -130,7 +130,7 @@ def self_check(window, output):
             assert website_sources == search_sources == ["DMM", "MGS"]
             assert window.api.request("/api/library")["total"] == 0
             context = BrowserContext(window.controller)
-            browser_page = context.new_page()
+            browser_page = context.new_page(background=True)
             browser_page.goto(window.backend.base + "/__desktop_check")
             browser_page.wait_for_function("() => document.body.dataset.ready === 'yes'")
             assert "Browser check" in browser_page.content()

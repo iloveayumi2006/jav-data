@@ -1,10 +1,20 @@
-# jav-data v1.1
+# jav-data v1.2
 
 A portable Windows desktop app for collecting DMM and MGS product metadata, original cover images, and Emby NFO files into a searchable local library. It uses a native interface and a built-in browser for website authentication, searching, and scraping.
 
 Japanese titles and metadata are preserved as supplied by the source website. The interface and metadata field labels are in English.
 
-## New in v1.1
+## New in v1.2
+
+- The authentication browser appears while the website loads. Search and scraping continue when the document and required metadata are ready.
+- Background metadata pages skip web images, video, fonts and prefetches. The visible login page retains its normal images and controls; original covers still download separately.
+- Hidden authentication pages pause when the browser considers it safe and resume when shown. Login state remains persistent.
+- Large queues retrieve only the next task, and progress tables update only changed rows. All uncleared cover-download history is available beyond 200 entries.
+- Fixed navigation timeout handling and consecutive page changes. Portable packaging includes the matching Python SSL runtime and required certificate-policy resource.
+
+See [the performance review](docs/performance-review-20261030.md) for offline measurements and validation. Actual website speed also depends on the Japan VPN and source website.
+
+## Features introduced in v1.1
 
 - Library opens in Cover view, with a softer Table selection style.
 - All product URL search results appear once crawling and sorting finish, in one scrollable list. Delete unwanted URLs before copying or saving. The page layout stays stable throughout searching.
@@ -15,7 +25,7 @@ Japanese titles and metadata are preserved as supplied by the source website. Th
 
 ## Download and requirements
 
-Download **jav-data-v1.1-windows-x64.zip** from [jav-data-v1.1](https://github.com/iloveayumi2006/jav-data/releases/tag/v1.1), extract the whole archive, and open **jav-data.exe**. Source code and release downloads are available on GitHub. The ZIP is the ready-to-run app; GitHub’s source-code archives are for development.
+Download **jav-data-v1.2-windows-x64.zip** from [jav-data-v1.2](https://github.com/iloveayumi2006/jav-data/releases/tag/v1.2), extract the whole archive, and open **jav-data.exe**. Source code and release downloads are available on GitHub. The ZIP is the ready-to-run app; GitHub’s source-code archives are for development.
 
 You need:
 
@@ -217,7 +227,7 @@ The source repository excludes databases, personal configuration, cookies, downl
 To archive a fresh release folder with documentation, dependency notices, a manifest, and a checksum:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts/package-release.py --folder "portable\release-clean\jav-data" --version 1.1
+.\.venv\Scripts\python.exe scripts/package-release.py --folder "portable\release-clean\jav-data" --version 1.2
 ```
 
 Third-party license notices are included in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and docs/third-party.

@@ -68,7 +68,7 @@ def test_full_crawl_pagination_and_partial_failure(tmp_path, monkeypatch):
             pass
 
     class Browser:
-        def new_page(self):
+        def new_page(self, **kwargs):
             return Page()
 
         def storage_state(self, **kwargs):

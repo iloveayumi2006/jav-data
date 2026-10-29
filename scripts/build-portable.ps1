@@ -20,6 +20,24 @@ $javPython = Join-Path $javRoot '.venv\Scripts\python.exe'
     --exclude-module playwright --exclude-module tkinter --exclude-module PySide6.QtQml `
     scripts/desktop_entry.py
 if ($LASTEXITCODE -ne 0) { throw 'Portable build failed' }
+# Tools on PATH (for example Poppler) can ship same-named OpenSSL DLLs with
+# different provider/config requirements. Bundle the pair belonging to _ssl.pyd.
+$javSslDirectory = & $javPython -c 'from pathlib import Path; import _ssl; print(Path(_ssl.__file__).parent)'
+if ($LASTEXITCODE -ne 0) { throw 'Could not locate the Python SSL runtime' }
+foreach ($javSslName in @('libssl-3-x64.dll', 'libcrypto-3-x64.dll')) {
+    $javSslSource = Join-Path $javSslDirectory $javSslName
+    if (-not (Test-Path -LiteralPath $javSslSource -PathType Leaf)) {
+        throw "Required Python SSL runtime is missing: $javSslName"
+    }
+    Copy-Item -LiteralPath $javSslSource -Destination 'dist/jav-data/_internal' -Force
+}
+# The managed development runtime's ssl.py loads this adjacent public CA-policy
+# resource. Preserve that policy in the frozen layout; ordinary Python has none.
+$javSslPolicy = & $javPython -c 'from pathlib import Path; import ssl; print(Path(ssl.__file__).with_name("codex-rejected-cas.pem"))'
+if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the Python SSL resources' }
+if (Test-Path -LiteralPath $javSslPolicy -PathType Leaf) {
+    Copy-Item -LiteralPath $javSslPolicy -Destination 'dist/jav-data/_internal' -Force
+}
 # Qt on supported Windows uses the OS ICU API. A different ICU from PATH may
 # expose version-suffixed symbols and break QtCore at startup when bundled.
 foreach ($javIcuName in @('icuuc.dll', 'icudt78.dll')) {

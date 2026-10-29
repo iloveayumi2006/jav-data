@@ -71,11 +71,6 @@ class ScrapeWorker:
             raise ValueError("Start the desktop app to use its embedded website browser.")
         self.browser = self.browser_factory()
 
-    def browser_closed(self, *args):
-        self.browser = None
-        self.auth_page = None
-        self.state = "closed"
-
     def run(self):
         try:
             while not self.stopping.is_set():
@@ -109,10 +104,11 @@ class ScrapeWorker:
                                     select(ScrapeJob)
                                     .where(ScrapeJob.status == "queued")
                                     .order_by(ScrapeJob.id)
+                                    .limit(1)
                                 )
                                 target = first.url if first else "https://video.dmm.co.jp/av/"
-                        self.auth_page.goto(target, timeout=45000)
                         self.auth_page.bring_to_front()
+                        self.auth_page.goto(target, wait_until="domcontentloaded", timeout=45000)
                         self.state = "awaiting_confirmation"
                     elif action == "ready":
                         if not self.browser:
@@ -153,7 +149,10 @@ class ScrapeWorker:
     def _process_next(self):
         with Session(self.engine) as session:
             job = session.scalar(
-                select(ScrapeJob).where(ScrapeJob.status == "queued").order_by(ScrapeJob.id)
+                select(ScrapeJob)
+                .where(ScrapeJob.status == "queued")
+                .order_by(ScrapeJob.id)
+                .limit(1)
             )
             if job is None:
                 return
@@ -164,7 +163,7 @@ class ScrapeWorker:
             session.commit()
         page = None
         try:
-            page = self.browser.new_page()
+            page = self.browser.new_page(background=True)
             response = page.goto(url, wait_until="domcontentloaded", timeout=45000)
             if response and response.status >= 400:
                 raise ValueError(f"Product page returned HTTP {response.status}")

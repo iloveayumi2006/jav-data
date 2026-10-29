@@ -142,7 +142,7 @@ def test_scrape_upsert_and_source_collision(app):  # noqa: F811
 
     app.app.state.downloader.paused = True
     worker = ScrapeWorker(app.app.state.settings, app.app.state.engine)
-    worker.browser = type("Browser", (), {"new_page": lambda self: Page()})()
+    worker.browser = type("Browser", (), {"new_page": lambda self, **kwargs: Page()})()
     job = app.post("/api/scrape-jobs", json={"urls": [URL]}).json()[0]
     worker.process_next()
     movie = app.get("/api/movies").json()[0]
@@ -186,7 +186,7 @@ def test_original_mgs_id_collision_does_not_merge(app):  # noqa: F811
             return product_html()
 
     worker = ScrapeWorker(app.app.state.settings, app.app.state.engine)
-    worker.browser = type("Browser", (), {"new_page": lambda self: Page()})()
+    worker.browser = type("Browser", (), {"new_page": lambda self, **kwargs: Page()})()
     app.post("/api/scrape-jobs", json={"urls": [URL]})
     worker.process_next()
     assert app.get("/api/scrape-jobs").json()[0]["status"] == "failed"

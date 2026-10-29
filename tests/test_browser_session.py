@@ -35,7 +35,12 @@ def test_ready_saves_cookies_and_reopening_restores_them(tmp_path, monkeypatch):
     try:
         worker.command("open").result(timeout=5)
         worker.command("ready").result(timeout=5)
-        auth_page.goto.assert_called_once_with("https://video.dmm.co.jp/av/", timeout=45000)
+        auth_page.goto.assert_called_once_with(
+            "https://video.dmm.co.jp/av/", wait_until="domcontentloaded", timeout=45000
+        )
+        assert [call[0] for call in auth_page.mock_calls].index("bring_to_front") < [
+            call[0] for call in auth_page.mock_calls
+        ].index("goto")
         assert (settings.data_dir / "browser-session.json").is_file()
         worker.command("close").result(timeout=5)
         browser.close.assert_not_called()

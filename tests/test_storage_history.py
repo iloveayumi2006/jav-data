@@ -46,7 +46,7 @@ def test_three_folders_route_new_products_and_preserve_existing_locations(client
     folders = client.get("/api/product-folders").json()
     assert [f["label"] for f in folders] == ["library", "second", "third"]
     worker = ScrapeWorker(client.app.state.settings, client.app.state.engine)
-    worker.browser = type("Browser", (), {"new_page": lambda self: Page()})()
+    worker.browser = type("Browser", (), {"new_page": lambda self, **kwargs: Page()})()
     url = "https://video.dmm.co.jp/av/content/?id=demo002"
     client.post("/api/scrape-jobs", json={"urls": [url], "product_folder_id": folders[1]["id"]})
     worker.process_next()

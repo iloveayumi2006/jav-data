@@ -1,4 +1,4 @@
-# Portable jav-data v1.1
+# Portable jav-data v1.2
 
 Double-click `jav-data.exe`. Keep `_internal` beside it. Native Windows controls provide the UI; an embedded browser handles DMM and MGS. The internal API binds to loopback on an automatically selected port.
 
@@ -64,6 +64,15 @@ New scraping jobs automatically export movie.nfo after metadata is saved and ref
 Movie detail covers occupy approximately 60% of the window height, centered and fitted without enlarging beyond the original resolution. Previous/Next buttons and Left/Right arrow keys follow the library search and sort order, including across result pages. Refresh metadata & cover queues the saved DMM or MGS product URL again; an unchanged completed cover is retained.
 
 Library browsing uses small cached previews; original cover files remain unchanged and are used in movie details and the full-cover viewer. The embedded browser initializes when first needed. The performance review is recorded in the source repository's docs folder.
+
+The authentication browser appears while its page loads. Background search and
+scraping pages skip image, video and font downloads and continue once the document
+and required metadata are ready. The visible login page keeps its images and
+normal controls; automatic media playback requires interaction. Leaving the
+authentication page lets the browser pause it when safe, and returning resumes it.
+Cover files are still downloaded separately at their original resolution.
+Large queues retrieve only the next task, and progress updates reuse unchanged
+table rows. All uncleared cover-download history remains available.
 
 
 ## Product URL lists

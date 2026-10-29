@@ -1,0 +1,236 @@
+{
+  "date": "2026-10-30",
+  "method": "Synthetic offline measurements. No user library or live website requests.",
+  "queues": {
+    "queued_rows": 20000,
+    "database": "synthetic in-memory SQLite",
+    "results": [
+      {
+        "model": "ScrapeJob",
+        "limit_1": false,
+        "times_ms": [
+          223.02,
+          201.23,
+          202.77
+        ],
+        "objects_loaded_across_three_reads": 60000
+      },
+      {
+        "model": "ScrapeJob",
+        "limit_1": true,
+        "times_ms": [
+          0.85,
+          0.22,
+          0.19
+        ],
+        "objects_loaded_across_three_reads": 3
+      },
+      {
+        "model": "MediaAsset",
+        "limit_1": false,
+        "times_ms": [
+          225.02,
+          190.69,
+          201.33
+        ],
+        "objects_loaded_across_three_reads": 60000
+      },
+      {
+        "model": "MediaAsset",
+        "limit_1": true,
+        "times_ms": [
+          0.93,
+          0.27,
+          0.22
+        ],
+        "objects_loaded_across_three_reads": 3
+      }
+    ]
+  },
+  "ui_before": {
+    "method": "Synthetic offscreen Qt widgets, one local run; no real database or profile",
+    "cover_1000_initial": {
+      "sync_ms": 20.18,
+      "event_flush_ms": 41.42
+    },
+    "cover_1000_progress": {
+      "sync_ms": 16.1,
+      "event_flush_ms": 39.48
+    },
+    "cover_1000_unchanged": {
+      "sync_ms": 0.01,
+      "event_flush_ms": 0.05
+    },
+    "cover_10000_initial": {
+      "sync_ms": 344.44,
+      "event_flush_ms": 46.39
+    },
+    "cover_10000_progress": {
+      "sync_ms": 210.47,
+      "event_flush_ms": 27.71
+    },
+    "cover_10000_unchanged": {
+      "sync_ms": 0.02,
+      "event_flush_ms": 0.06
+    },
+    "jobs_100_initial": {
+      "sync_ms": 39.95,
+      "event_flush_ms": 2.4
+    },
+    "jobs_100_one_change": {
+      "sync_ms": 40.24,
+      "event_flush_ms": 4.38
+    }
+  },
+  "ui_after": {
+    "cover_1000_initial": {
+      "sync_ms": 22.77,
+      "event_flush_ms": 8.06
+    },
+    "cover_1000_progress": {
+      "sync_ms": 0.61,
+      "event_flush_ms": 2.84
+    },
+    "cover_1000_unchanged": {
+      "sync_ms": 0.0,
+      "event_flush_ms": 0.02
+    },
+    "cover_10000_initial": {
+      "sync_ms": 260.91,
+      "event_flush_ms": 4.7
+    },
+    "cover_10000_progress": {
+      "sync_ms": 5.62,
+      "event_flush_ms": 3.21
+    },
+    "cover_10000_unchanged": {
+      "sync_ms": 0.02,
+      "event_flush_ms": 0.06
+    },
+    "jobs_100_initial": {
+      "sync_ms": 53.58,
+      "event_flush_ms": 2.55
+    },
+    "jobs_100_one_change": {
+      "sync_ms": 0.49,
+      "event_flush_ms": 2.82
+    }
+  },
+  "browser": {
+    "method": "Synthetic local HTTP server, temporary browser profile, warmed pages",
+    "limitation": "These are controlled navigation timings, not actual website timings.",
+    "image_delay_ms": 1800.0,
+    "runs": [
+      {
+        "case": "interactive_full_load",
+        "round": 1,
+        "navigation_ms": 1830.01,
+        "script_and_fetch_ready_ms": 1831.14,
+        "requests": {
+          "/page": 1,
+          "/script.js": 1,
+          "/slow.png": 1,
+          "/data": 1
+        }
+      },
+      {
+        "case": "interactive_dom_ready",
+        "round": 1,
+        "navigation_ms": 112.96,
+        "script_and_fetch_ready_ms": 114.57,
+        "requests": {
+          "/page": 1,
+          "/script.js": 1,
+          "/slow.png": 1,
+          "/data": 1
+        }
+      },
+      {
+        "case": "background_dom_ready",
+        "round": 1,
+        "navigation_ms": 37.55,
+        "script_and_fetch_ready_ms": 38.7,
+        "requests": {
+          "/page": 1,
+          "/script.js": 1,
+          "/data": 1
+        }
+      },
+      {
+        "case": "interactive_full_load",
+        "round": 2,
+        "navigation_ms": 1840.69,
+        "script_and_fetch_ready_ms": 1842.4,
+        "requests": {
+          "/page": 1,
+          "/script.js": 1,
+          "/slow.png": 1,
+          "/data": 1
+        }
+      },
+      {
+        "case": "interactive_dom_ready",
+        "round": 2,
+        "navigation_ms": 114.59,
+        "script_and_fetch_ready_ms": 115.94,
+        "requests": {
+          "/page": 1,
+          "/script.js": 1,
+          "/slow.png": 1,
+          "/data": 1
+        }
+      },
+      {
+        "case": "background_dom_ready",
+        "round": 2,
+        "navigation_ms": 41.25,
+        "script_and_fetch_ready_ms": 43.88,
+        "requests": {
+          "/page": 1,
+          "/script.js": 1,
+          "/data": 1
+        }
+      },
+      {
+        "case": "interactive_full_load",
+        "round": 3,
+        "navigation_ms": 1846.21,
+        "script_and_fetch_ready_ms": 1847.32,
+        "requests": {
+          "/page": 1,
+          "/script.js": 1,
+          "/slow.png": 1,
+          "/data": 1
+        }
+      },
+      {
+        "case": "interactive_dom_ready",
+        "round": 3,
+        "navigation_ms": 114.9,
+        "script_and_fetch_ready_ms": 115.65,
+        "requests": {
+          "/page": 1,
+          "/script.js": 1,
+          "/slow.png": 1,
+          "/data": 1
+        }
+      },
+      {
+        "case": "background_dom_ready",
+        "round": 3,
+        "navigation_ms": 29.61,
+        "script_and_fetch_ready_ms": 132.49,
+        "requests": {
+          "/page": 1,
+          "/script.js": 1,
+          "/data": 1
+        }
+      }
+    ],
+    "median_navigation_ms": {
+      "interactive_full_load": 1840.69,
+      "interactive_dom_ready": 114.59,
+      "background_dom_ready": 37.55
+    }
+  }
+}

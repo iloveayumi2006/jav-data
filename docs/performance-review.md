@@ -1,5 +1,9 @@
 # Performance review — 5 October 2026
 
+For the later browser and queue review, see
+[30 October 2026](performance-review-20261030.md). The measurements below describe
+the earlier image-cache work.
+
 The main problems were oversized images retained for library previews, closed image
 windows retaining their image data, and redundant work on each library load. These
 have been addressed while preserving the existing screens, sorting, search,

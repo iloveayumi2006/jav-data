@@ -88,7 +88,7 @@ def test_cover_numbers_restart_after_clear_and_retry_uses_permanent_id(window, m
     assert calls[-1] == "/api/media-assets/903/retry"
 
 
-def test_large_cover_list_reuses_rows_for_progress_and_new_downloads(window):
+def test_large_cover_list_reuses_rows_for_progress_and_new_downloads(window, monkeypatch):
     def asset(i):
         return {
             "id": i,
@@ -104,12 +104,23 @@ def test_large_cover_list_reuses_rows_for_progress_and_new_downloads(window):
     rows = [asset(i) for i in reversed(range(1, 1106))]
     window.show_covers(rows)
     assert window.covers_table.rowCount() == 1105
-    preserved = window.covers_table.item(0, 1)
+    original_item = window.covers_table.item
+    touched_rows = set()
+
+    def item(row, column):
+        touched_rows.add(row)
+        return original_item(row, column)
+
+    monkeypatch.setattr(window.covers_table, "item", item)
+    preserved = original_item(0, 1)
     progress = rows[0] | {"downloaded_bytes": 50000}
     window.show_covers([progress] + rows[1:])
+    assert touched_rows == {0}
     assert window.covers_table.item(0, 1) is preserved
     assert "49 KB" in window.covers_table.item(0, 3).text()
+    touched_rows.clear()
     window.show_covers([asset(1106), progress] + rows[1:])
+    assert touched_rows == {0}
     assert window.covers_table.rowCount() == 1106
     assert window.covers_table.item(1, 1) is preserved
     assert window.covers_table.item(0, 0).text() == "1106"
@@ -117,3 +128,36 @@ def test_large_cover_list_reuses_rows_for_progress_and_new_downloads(window):
     window.show_covers([asset(1106)])
     assert window.covers_table.rowCount() == 1
     assert window.covers_table.item(0, 0).text() == "1"
+
+
+def test_job_progress_preserves_selection_and_retry_controls(window, monkeypatch):
+    jobs = [
+        {"id": 21, "status": "completed", "url": "https://example.test/21", "error": None},
+        {"id": 20, "status": "failed", "url": "https://example.test/20", "error": "Failed"},
+    ]
+    window.show_jobs(jobs)
+    window.jobs_table.selectRow(0)
+    preserved = window.jobs_table.item(0, 2)
+    preserved_retry = window.jobs_table.cellWidget(0, 4)
+    queued = jobs[1] | {"status": "queued", "error": None}
+    window.show_jobs([jobs[0], queued])
+    assert window.jobs_table.currentRow() == 0
+    assert window.jobs_table.item(0, 2) is preserved
+    assert window.jobs_table.cellWidget(0, 4) is preserved_retry
+    assert window.jobs_table.cellWidget(1, 4) is None
+    assert window.jobs_table.item(1, 1).text() == "queued"
+    assert window.jobs_table.item(1, 3).text() == ""
+
+    requests = []
+    monkeypatch.setattr(window.api, "submit", lambda path, *a, **kw: requests.append(path))
+    window.show_jobs([jobs[0] | {"id": 22}, jobs[0], queued])
+    assert window.jobs_table.item(1, 2) is preserved
+    assert window.jobs_table.cellWidget(1, 4) is preserved_retry
+    preserved_retry.findChild(QPushButton).click()
+    assert requests == ["/api/scrape-jobs/21/retry"]
+
+    window.show_jobs([])
+    assert window.jobs_table.rowCount() == 0
+    window.show_jobs([queued])
+    assert window.jobs_table.item(0, 0).text() == "20"
+    assert window.jobs_table.cellWidget(0, 4) is None

@@ -8,13 +8,134 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from PySide6.QtCore import QObject, QTimer, QUrl, Signal, Slot
-from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile
+from PySide6.QtWebEngineCore import (
+    QWebEngineLoadingInfo,
+    QWebEnginePage,
+    QWebEngineProfile,
+    QWebEngineScript,
+    QWebEngineSettings,
+    QWebEngineUrlRequestInfo,
+    QWebEngineUrlRequestInterceptor,
+)
+
+
+class ScrapeResources(QWebEngineUrlRequestInterceptor):
+    """Background metadata pages need DOM/scripts, not decoded pictures or video."""
+
+    BLOCKED = frozenset(
+        getattr(QWebEngineUrlRequestInfo.ResourceType, "ResourceType" + name)
+        for name in ("Image", "Media", "FontResource", "Prefetch", "Favicon")
+    )
+
+    def interceptRequest(self, info):
+        # Runs on Chromium's request path: never call the profile or perform I/O here.
+        if info.resourceType() in self.BLOCKED:
+            info.block(True)
+
+
+class Navigation(QObject):
+    """One cancellable navigation, with a DOM-ready marker unique to its document."""
+
+    def __init__(self, page, url, timeout, wait_until, future):
+        super().__init__(page)
+        self.page, self.future = page, future
+        self.done = False
+        self.wait_until = wait_until
+        self.checking = False
+        self.marker = uuid.uuid4().hex
+        self.deadline = QTimer(self)
+        self.deadline.setSingleShot(True)
+        self.deadline.timeout.connect(self.timed_out)
+        self.poll = QTimer(self)
+        self.poll.setInterval(100)
+        self.poll.timeout.connect(self.check_dom)
+        page.navigation = self
+        page.setLifecycleState(QWebEnginePage.LifecycleState.Active)
+        self.script = QWebEngineScript()
+        self.script.setName("jav-data-navigation")
+        self.script.setWorldId(QWebEngineScript.ScriptWorldId.ApplicationWorld)
+        self.script.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentReady)
+        self.script.setRunsOnSubFrames(False)
+        self.script.setSourceCode(f"window.__javDataReady = '{self.marker}';")
+        page.scripts().insert(self.script)
+        self.poll.start()
+        page.loadingChanged.connect(self.loading_changed)
+        self.deadline.start(timeout)
+        page.setUrl(QUrl(url))
+
+    def check_dom(self):
+        if self.done or self.checking:
+            return
+        self.checking = True
+        completed = " && document.readyState === 'complete'" if self.wait_until == "load" else ""
+        self.page.runJavaScript(
+            f"window.__javDataReady === '{self.marker}'{completed}",
+            QWebEngineScript.ScriptWorldId.ApplicationWorld,
+            self.dom_checked,
+        )
+
+    def dom_checked(self, ready):
+        self.checking = False
+        if ready and not self.done:
+            self.finish()
+
+    def loading_changed(self, info):
+        status = QWebEngineLoadingInfo.LoadStatus
+        # Chromium can coalesce loadStarted when replacing a still-loading document.
+        # Success belongs to this navigation only after its own document marker exists.
+        if info.status() == status.LoadSucceededStatus:
+            self.check_dom()
+        elif (
+            info.status() == status.LoadFailedStatus
+            and info.errorCode() != -3  # ERR_ABORTED from a superseded/stopped navigation
+            and info.url() in (self.page.url(), self.page.requestedUrl())
+        ):
+            self.finish("Embedded browser could not load the page")
+
+    def timed_out(self):
+        self.finish("Embedded browser navigation timed out", stop=True)
+
+    def finish(self, error=None, *, stop=False):
+        if self.done:
+            return
+        self.done = True
+        self.deadline.stop()
+        self.poll.stop()
+        self.page.loadingChanged.disconnect(self.loading_changed)
+        self.page.scripts().remove(self.script)
+        self.page.navigation = None
+        if stop:
+            self.page.triggerAction(QWebEnginePage.WebAction.Stop)
+        self.page.controller.finish(self.future, 200 if error is None else None, error)
+        self.page.update_lifecycle()
+        self.deleteLater()
 
 
 class WebPage(QWebEnginePage):
-    def __init__(self, controller):
+    def __init__(self, controller, background=False):
         super().__init__(controller.ensure_profile(), controller)
         self.controller = controller
+        self.background = background
+        self.navigation = None
+        self.settings().setAttribute(
+            QWebEngineSettings.WebAttribute.PlaybackRequiresUserGesture, True
+        )
+        if background:
+            self.resources = ScrapeResources(self)
+            self.setUrlRequestInterceptor(self.resources)
+            self.setAudioMuted(True)
+        self.visibleChanged.connect(self.update_lifecycle)
+        self.recommendedStateChanged.connect(self.update_lifecycle)
+
+    def update_lifecycle(self, *_args):
+        # Never freeze a worker page or interrupt a load/login that Qt considers active.
+        state = QWebEnginePage.LifecycleState
+        if self.background or self.navigation is not None or self.isVisible():
+            target = state.Active
+        else:
+            target = state.Active if self.recommendedState() == state.Active else state.Frozen
+        if self.lifecycleState() != target:
+            self.setLifecycleState(target)
 
     def createWindow(self, _kind):
         token = self.controller.new_page()
@@ -84,19 +205,23 @@ class BrowserController(QObject):
             else:
                 future.set_result(result)
 
-    def new_page(self):
+    def new_page(self, background=False):
         token = uuid.uuid4().hex
-        page = WebPage(self)
+        page = WebPage(self, background)
         self.pages[token] = page
         page.windowCloseRequested.connect(lambda: self.close_page(token))
         return token
 
     def show_page(self, token):
-        self.pageShown.emit(self.pages[token])
+        page = self.pages[token]
+        page.setLifecycleState(QWebEnginePage.LifecycleState.Active)
+        self.pageShown.emit(page)
 
     def close_page(self, token):
         page = self.pages.pop(token, None)
         if page:
+            if page.navigation is not None:
+                page.navigation.finish("The embedded browser page was closed", stop=True)
             self.pageClosed.emit(page)
             page.triggerAction(QWebEnginePage.WebAction.Stop)
             page.deleteLater()
@@ -104,9 +229,11 @@ class BrowserController(QObject):
     @Slot(object)
     def dispatch(self, request):
         action, token, value, future = request
+        if future.cancelled():
+            return
         try:
             if action == "new":
-                self.finish(future, self.new_page())
+                self.finish(future, self.new_page(background=bool(value)))
             elif action == "pages":
                 self.finish(future, list(self.pages))
             elif action == "cookies":
@@ -134,25 +261,12 @@ class BrowserController(QObject):
                 elif action == "js":
                     page.runJavaScript(value, lambda result: self.finish(future, result))
                 elif action == "goto":
-                    url, timeout = value
-
-                    def loaded(ok):
-                        try:
-                            page.loadFinished.disconnect(loaded)
-                        except RuntimeError:
-                            pass
-                        self.finish(
-                            future,
-                            200 if ok else None,
-                            None if ok else "Embedded browser could not load the page",
-                        )
-
-                    page.loadFinished.connect(loaded)
-                    page.setUrl(QUrl(url))
-                    QTimer.singleShot(
-                        timeout,
-                        lambda: self.finish(future, error="Embedded browser navigation timed out"),
-                    )
+                    url, timeout, wait_until = value
+                    if wait_until not in {"load", "domcontentloaded"}:
+                        raise ValueError("Unsupported browser navigation wait mode")
+                    if page.navigation is not None:
+                        page.navigation.finish("Browser navigation was replaced", stop=True)
+                    Navigation(page, url, timeout, wait_until, future)
                 else:
                     raise ValueError("Unknown embedded browser operation")
         except Exception as error:
@@ -167,8 +281,10 @@ class BrowserPage:
     def url(self):
         return self.controller.call("url", self.token)
 
-    def goto(self, url, timeout=45000, **_kwargs):
-        status = self.controller.call("goto", self.token, (url, timeout), timeout / 1000 + 5)
+    def goto(self, url, timeout=45000, wait_until="load"):
+        status = self.controller.call(
+            "goto", self.token, (url, timeout, wait_until), timeout / 1000 + 5
+        )
         return SimpleNamespace(status=status)
 
     def content(self):
@@ -200,8 +316,8 @@ class BrowserContext:
     def pages(self):
         return [BrowserPage(self.controller, token) for token in self.controller.call("pages")]
 
-    def new_page(self):
-        return BrowserPage(self.controller, self.controller.call("new"))
+    def new_page(self, *, background=False):
+        return BrowserPage(self.controller, self.controller.call("new", value=background))
 
     def storage_state(self, path):
         state = {"cookies": self.controller.call("cookies"), "origins": []}

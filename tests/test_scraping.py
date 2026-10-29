@@ -120,7 +120,7 @@ def test_worker_saves_metadata_and_upserts(app):
     engine = app.app.state.engine
     settings = app.app.state.settings
     worker = ScrapeWorker(settings, engine)
-    worker.browser = type("Browser", (), {"new_page": lambda self: FakePage()})()
+    worker.browser = type("Browser", (), {"new_page": lambda self, **kwargs: FakePage()})()
     job_id = app.post("/api/scrape-jobs", json={"urls": [URL]}).json()[0]["id"]
     worker.process_next()
     first = app.get("/api/movies").json()[0]

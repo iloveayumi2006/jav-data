@@ -136,7 +136,7 @@ class Discovery:
                 self.jobs[identifier].update(status="failed", error=str(error))
 
     def crawl_in_context(self, identifier, term, context):
-        page = context.new_page()
+        page = context.new_page(background=True)
         try:
             number = 1
             source = self.jobs[identifier].get("source", "dmm")

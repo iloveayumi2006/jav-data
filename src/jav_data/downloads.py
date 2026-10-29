@@ -110,6 +110,7 @@ class DownloadWorker:
                 select(MediaAsset)
                 .where(MediaAsset.status == "queued", MediaAsset.kind == "cover")
                 .order_by(MediaAsset.id)
+                .limit(1)
             )
             if asset is None:
                 return

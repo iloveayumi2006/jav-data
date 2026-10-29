@@ -373,12 +373,30 @@ def retry_control(callback):
 def configure_retry_column(widget, stretch_column):
     widget.setObjectName("queueTable")
     header = widget.horizontalHeader()
+    # Bound automatic width measurement; histories can contain thousands of rows.
+    header.setResizeContentsPrecision(100)
     header.setStretchLastSection(False)
     header.setSectionResizeMode(stretch_column, QHeaderView.ResizeMode.Stretch)
     last = widget.columnCount() - 1
     header.setSectionResizeMode(last, QHeaderView.ResizeMode.Fixed)
     widget.setColumnWidth(last, 88)
     widget.verticalHeader().setDefaultSectionSize(36)
+
+
+def prepare_queue_rows(widget, records, previous):
+    """Keep existing items when a poll changes values or prepends new history."""
+    identifiers = [record["id"] for record in records]
+    previous_ids = [record["id"] for record in previous]
+    added = len(identifiers) - len(previous_ids)
+    if identifiers == previous_ids:
+        return {record["id"]: record for record in previous}
+    if previous_ids and added > 0 and identifiers[added:] == previous_ids:
+        for row in range(added):
+            widget.insertRow(row)
+        return {record["id"]: record for record in previous}
+    widget.clearContents()
+    widget.setRowCount(len(records))
+    return {}
 
 
 def page(title):
@@ -1232,11 +1250,19 @@ class DesktopWindow(QMainWindow):
     def session_action(self, action):
         for control in self.auth_buttons:
             control.setEnabled(False)
-        self.auth_feedback.setText("Working…")
+        self.auth_feedback.setText(
+            "Opening website… The browser will appear while the page loads."
+            if action.startswith("open")
+            else "Working…"
+        )
 
         def finished(result):
             self.auth_status.setText("Session: " + result["status"].replace("_", " "))
-            self.auth_feedback.setText("Done.")
+            self.auth_feedback.setText(
+                "Complete age confirmation and login, then mark the session ready."
+                if action.startswith("open")
+                else "Done."
+            )
             for control in self.auth_buttons:
                 control.setEnabled(True)
 
@@ -1648,40 +1674,51 @@ class DesktopWindow(QMainWindow):
     def show_jobs(self, jobs):
         if jobs == getattr(self, "last_jobs", None):
             return
-        self.last_jobs = jobs
-        self.jobs_table.clearContents()
-        self.jobs_table.setRowCount(len(jobs))
-        for row, job in enumerate(jobs):
-            for col, value in enumerate([job["id"], job["status"], job["url"], job["error"] or ""]):
-                self.jobs_table.setItem(row, col, QTableWidgetItem(str(value)))
-            if job["status"] in ("failed", "awaiting_session", "completed"):
-                self.jobs_table.setCellWidget(
-                    row,
-                    4,
-                    retry_control(
-                        lambda job_id=job["id"]: self.api.submit(
-                            f"/api/scrape-jobs/{job_id}/retry", lambda _r: self.refresh_status(), {}
+        table = self.jobs_table
+        table.setUpdatesEnabled(False)
+        try:
+            previous = prepare_queue_rows(table, jobs, getattr(self, "last_jobs", []))
+            for row, job in enumerate(jobs):
+                if job == previous.get(job["id"]):
+                    continue
+                values = [job["id"], job["status"], job["url"], job["error"] or ""]
+                for col, value in enumerate(values):
+                    text = str(value)
+                    item = table.item(row, col)
+                    if item is None:
+                        table.setItem(row, col, QTableWidgetItem(text))
+                    elif item.text() != text:
+                        item.setText(text)
+                retry = table.cellWidget(row, 4)
+                retryable = job["status"] in ("failed", "awaiting_session", "completed")
+                if retryable and retry is None:
+                    table.setCellWidget(
+                        row,
+                        4,
+                        retry_control(
+                            lambda job_id=job["id"]: self.api.submit(
+                                f"/api/scrape-jobs/{job_id}/retry",
+                                lambda _r: self.refresh_status(),
+                                {},
+                            ),
                         ),
-                    ),
-                )
+                    )
+                elif not retryable and retry is not None:
+                    table.removeCellWidget(row, 4)
+            self.last_jobs = jobs
+        finally:
+            table.setUpdatesEnabled(True)
 
     def show_covers(self, assets):
         if assets == getattr(self, "last_covers", None):
             return
-        previous_ids = [asset["id"] for asset in getattr(self, "last_covers", [])]
-        identifiers = [asset["id"] for asset in assets]
-        added = len(identifiers) - len(previous_ids)
         table = self.covers_table
         table.setUpdatesEnabled(False)
         try:
-            if previous_ids != identifiers:
-                if previous_ids and added > 0 and identifiers[added:] == previous_ids:
-                    for row in range(added):
-                        table.insertRow(row)
-                else:
-                    table.clearContents()
-                    table.setRowCount(len(assets))
+            previous = prepare_queue_rows(table, assets, getattr(self, "last_covers", []))
             for row, asset in enumerate(assets):
+                if asset == previous.get(asset["id"]):
+                    continue
                 total = asset["total_bytes"]
                 progress = f"{asset['downloaded_bytes'] / 1024:.0f} KB" + (
                     f" / {total / 1024:.0f} KB" if total else ""
